@@ -254,7 +254,7 @@ export default function ProductInfoPage({ user }) {
             {/* Chi tiết sản phẩm */}
             <div className="flex flex-col md:flex-row">
                 {/* Ảnh sản phẩm */}
-                <div className="flex-1 flex justify-center ml-10">
+                <div className="flex-1 flex justify-center ml-36 mr-20">
                     <div className="flex flex-col items-center">
                         <img
                             src={activeImage || "/images/default.jpg"}
@@ -313,25 +313,22 @@ export default function ProductInfoPage({ user }) {
                     </div>
 
                     <div className="flex gap-4 mb-6">
-                        <div className="relative">
                             <button
                                 onClick={() => addToCart(product.productId)}
-                                className=" bg-green-700 text-white pl-6 pr-10 py-3 rounded-lg font-bold hover:bg-green-900 transition"
+                                className="flex items-center gap-2 bg-green-700 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-900 transition"
                             >
                                 Thêm vào giỏ hàng 
+                                <FaShoppingCart/>
                             </button>
-                            <FaShoppingCart className="absolute right-4 top-4 text-white font-bold"/>
-                        </div>
+                            
 
-                        <div className="relative">
                             <button
                                 onClick={handleBuyNow}
-                                className="bg-red-600 text-white pl-6 pr-10 py-3 rounded-lg font-bold hover:bg-red-800 transition"
+                                className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-800 transition"
                             >
                                 Mua ngay
+                                <FaShoppingBag/>
                             </button>
-                            <FaShoppingBag className="absolute right-4 top-4 text-white font-bold"/>
-                        </div>
 
                     </div>
 
