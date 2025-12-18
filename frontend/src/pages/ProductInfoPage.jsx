@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { FaShoppingCart, FaShoppingBag, FaStar } from "react-icons/fa";
 import { useCart } from "../contexts/CartContext";
 import { CheckCircle2 } from "lucide-react";
+import ReviewPagination from "../components/Pagination";
 
 
 export default function ProductInfoPage({ user }) {
@@ -313,22 +314,22 @@ export default function ProductInfoPage({ user }) {
                     </div>
 
                     <div className="flex gap-4 mb-6">
-                            <button
-                                onClick={() => addToCart(product.productId)}
-                                className="flex items-center gap-2 bg-green-700 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-900 transition"
-                            >
-                                Thêm vào giỏ hàng 
-                                <FaShoppingCart/>
-                            </button>
-                            
+                        <button
+                            onClick={() => addToCart(product.productId)}
+                            className="flex items-center gap-2 bg-green-700 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-900 transition"
+                        >
+                            Thêm vào giỏ hàng
+                            <FaShoppingCart />
+                        </button>
 
-                            <button
-                                onClick={handleBuyNow}
-                                className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-800 transition"
-                            >
-                                Mua ngay
-                                <FaShoppingBag/>
-                            </button>
+
+                        <button
+                            onClick={handleBuyNow}
+                            className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-800 transition"
+                        >
+                            Mua ngay
+                            <FaShoppingBag />
+                        </button>
 
                     </div>
 
@@ -443,25 +444,13 @@ export default function ProductInfoPage({ user }) {
 
 
                             {/* Pagination */}
-                            {reviewTotalPages > 1 && (
-                                <div className="flex gap-2 mb-4">
-                                    <button
-                                        disabled={reviewPage === 0}
-                                        onClick={() => setReviewPage(reviewPage - 1)}
-                                        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-                                    >
-                                        Trước
-                                    </button>
-                                    <span className="px-2 py-1">{reviewPage + 1} / {reviewTotalPages}</span>
-                                    <button
-                                        disabled={reviewPage + 1 >= reviewTotalPages}
-                                        onClick={() => setReviewPage(reviewPage + 1)}
-                                        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-                                    >
-                                        Sau
-                                    </button>
-                                </div>
-                            )}
+                            <div className="flex items-center gap-2 mt-6">
+                                <ReviewPagination
+                                    currentPage={reviewPage}
+                                    totalPages={reviewTotalPages}
+                                    onPageChange={setReviewPage}
+                                />
+                            </div>
 
                             {/* Form thêm review */}
                             {user && (

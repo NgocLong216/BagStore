@@ -59,7 +59,7 @@ export default function OrderDetailPage() {
                     <div className="mb-6">
                         <button
                             onClick={() => navigate(-1)}
-                            className="text-green-700 font-semibold hover:underline mb-2"
+                            className="px-4 py-2 hover:bg-gray-100 text-green-700 font-semibold mb-2"
                         >
                             ← Quay lại
                         </button>

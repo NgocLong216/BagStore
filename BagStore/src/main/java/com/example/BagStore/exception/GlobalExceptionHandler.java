@@ -16,15 +16,22 @@ public class GlobalExceptionHandler {
 
     // Bắt lỗi validate @Valid
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-            errors.put(error.getField(), error.getDefaultMessage());
-        }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
-    }
+    public ResponseEntity<?> handleValidation(MethodArgumentNotValidException ex) {
 
-    @ExceptionHandler(RuntimeException.class)
+        Map<String, String> errors = new HashMap<>();
+
+        ex.getBindingResult().getFieldErrors()
+                .forEach(err -> errors.put(err.getField(), err.getDefaultMessage()));
+
+        return ResponseEntity.badRequest().body(Map.of(
+                "message", "Dữ liệu không hợp lệ",
+                "errors", errors
+        ));
+    }
+    
+
+
+@ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());

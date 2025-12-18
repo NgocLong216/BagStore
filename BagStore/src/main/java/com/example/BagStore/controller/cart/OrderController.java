@@ -6,6 +6,7 @@ import com.example.BagStore.dto.OrderResponseDTO;
 import com.example.BagStore.entity.Order;
 import com.example.BagStore.security.CustomUserDetails;
 import com.example.BagStore.service.OrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +29,7 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<?> createOrder(
             @AuthenticationPrincipal CustomUserDetails user,
-            @RequestBody OrderRequestDTO request
+            @Valid @RequestBody OrderRequestDTO request
     ) {
         Order order = orderService.createOrder(user.getUser().getUserId(), request);
 

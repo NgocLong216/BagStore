@@ -47,7 +47,7 @@ export default function OrderSuccessPage() {
                 <div className="space-y-3">
                     <button
                         onClick={() => navigate("/orders")}
-                        className="w-full bg-green-700 text-white py-3 rounded-lg font-semibold hover:bg-black transition"
+                        className="w-full bg-green-700 text-white py-3 rounded-lg font-semibold hover:bg-green-900 transition"
                     >
                         Xem đơn hàng
                     </button>

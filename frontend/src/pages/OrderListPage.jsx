@@ -6,6 +6,11 @@ export default function OrderListPage() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [cancelOrderId, setCancelOrderId] = useState(null);
+
+    const [showResultModal, setShowResultModal] = useState(false);
+    const [resultMessage, setResultMessage] = useState("");
 
     // ===== MAP TRẠNG THÁI =====
     const ORDER_STATUS = {
@@ -23,14 +28,25 @@ export default function OrderListPage() {
         },
     };
 
-    const handleCancelOrder = async (orderId) => {
-        if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) return;
-    
+    useEffect(() => {
+        if (showCancelModal || showResultModal) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "auto";
+        }
+
+        return () => {
+            document.body.style.overflow = "auto";
+        };
+    }, [showCancelModal, showResultModal]);
+
+
+    const handleCancelOrder = async () => {
         try {
             const token = localStorage.getItem("token");
-    
+
             const res = await fetch(
-                `http://localhost:8080/api/orders/${orderId}/cancel`,
+                `http://localhost:8080/api/orders/${cancelOrderId}/cancel`,
                 {
                     method: "PUT",
                     headers: {
@@ -38,27 +54,29 @@ export default function OrderListPage() {
                     },
                 }
             );
-    
-            if (!res.ok) {
-                throw new Error("Hủy đơn thất bại");
-            }
-    
-            // Cập nhật lại state
+
+            if (!res.ok) throw new Error("Hủy đơn thất bại");
+
             setOrders(prev =>
                 prev.map(order =>
-                    order.orderId === orderId
+                    order.orderId === cancelOrderId
                         ? { ...order, status: "CANCELLED" }
                         : order
                 )
             );
-    
-            alert("Hủy đơn hàng thành công");
+
+            setResultMessage("Hủy đơn hàng thành công");
         } catch (err) {
             console.error(err);
-            alert("Không thể hủy đơn hàng");
+            setResultMessage("Không thể hủy đơn hàng");
+        } finally {
+            setShowCancelModal(false);
+            setShowResultModal(true);
+            setCancelOrderId(null);
         }
     };
-    
+
+
 
     // ===== FETCH ORDERS =====
     useEffect(() => {
@@ -179,15 +197,19 @@ export default function OrderListPage() {
                                             <div className="flex gap-4">
                                                 <button
                                                     onClick={() => navigate(`/orders/${order.orderId}`)}
-                                                    className="text-green-700 font-semibold hover:underline"
+                                                    className="px-4 py-2 text-green-700 font-semibold hover:bg-gray-100"
                                                 >
                                                     Xem chi tiết
                                                 </button>
 
                                                 {order.status === "PENDING" && (
                                                     <button
-                                                        onClick={() => handleCancelOrder(order.orderId)}
-                                                        className="text-red-600 font-semibold hover:underline"
+                                                        onClick={() => {
+                                                            setCancelOrderId(order.orderId);
+                                                            setShowCancelModal(true);
+                                                        }}
+
+                                                        className="px-4 py-2 text-red-600 font-semibold hover:bg-gray-100"
                                                     >
                                                         Hủy đơn
                                                     </button>
@@ -206,6 +228,48 @@ export default function OrderListPage() {
                     )}
                 </main>
             </div>
+            {showCancelModal && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-lg p-6 w-[380px]">
+                        <h3 className="text-lg font-bold text-gray-800 mb-3">
+                            Xác nhận hủy đơn
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                            Bạn có chắc chắn muốn hủy đơn hàng này không?
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowCancelModal(false)}
+                                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+                            >
+                                Không
+                            </button>
+                            <button
+                                onClick={handleCancelOrder}
+                                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+                            >
+                                Hủy đơn
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {showResultModal && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-lg p-6 w-[360px] text-center">
+                        <p className="text-gray-800 font-semibold mb-6">
+                            {resultMessage}
+                        </p>
+                        <button
+                            onClick={() => setShowResultModal(false)}
+                            className="bg-green-700 text-white px-6 py-2 rounded hover:bg-green-800"
+                        >
+                            Đóng
+                        </button>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }

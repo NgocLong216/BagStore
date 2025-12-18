@@ -3,6 +3,7 @@ import { FaShoppingCart, FaSearch, FaFilter } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
+import Pagination from "../components/Pagination";
 
 
 export default function ProductPage({ user }) {
@@ -185,110 +186,33 @@ export default function ProductPage({ user }) {
         </div>
 
         {/* Pagination */}
-        <div className="flex justify-center mt-12">
-          <nav className="inline-flex items-center space-x-2">
-            {/* Prev */}
-            <button
-              onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-              disabled={page === 0}
-              className={`px-3 py-2 rounded-full border ${page === 0
-                ? "text-gray-400 border-gray-200 cursor-not-allowed"
-                : "text-[#2c5f2d] border-[#2c5f2d] hover:bg-[#2c5f2d] hover:text-white transition"
-                }`}
-            >
-              ←
-            </button>
-
-            {/* Page numbers */}
-            {(() => {
-              let pages = [];
-              let start = Math.max(0, page - 2);
-              let end = Math.min(totalPages - 1, page + 2);
-
-              if (start > 1) {
-                pages.push(
-                  <button
-                    key={0}
-                    onClick={() => setPage(0)}
-                    className={`w-10 h-10 flex items-center justify-center rounded-full border transition ${page === 0
-                      ? "bg-[#2c5f2d] text-white border-[#2c5f2d]"
-                      : "text-[#2c5f2d] border-gray-300 hover:bg-[#2c5f2d] hover:text-white"
-                      }`}
-                  >
-                    1
-                  </button>
-                );
-                if (start > 2) pages.push(<span key="dots1">...</span>);
-              }
-
-              for (let i = start; i <= end; i++) {
-                pages.push(
-                  <button
-                    key={i}
-                    onClick={() => setPage(i)}
-                    className={`w-10 h-10 flex items-center justify-center rounded-full border transition ${i === page
-                      ? "bg-[#2c5f2d] text-white border-[#2c5f2d]"
-                      : "text-[#2c5f2d] border-gray-300 hover:bg-[#2c5f2d] hover:text-white"
-                      }`}
-                  >
-                    {i + 1}
-                  </button>
-                );
-              }
-
-              if (end < totalPages - 2) {
-                pages.push(<span key="dots2">...</span>);
-              }
-              if (end < totalPages - 1) {
-                pages.push(
-                  <button
-                    key={totalPages - 1}
-                    onClick={() => setPage(totalPages - 1)}
-                    className={`w-10 h-10 flex items-center justify-center rounded-full border transition ${page === totalPages - 1
-                      ? "bg-[#2c5f2d] text-white border-[#2c5f2d]"
-                      : "text-[#2c5f2d] border-gray-300 hover:bg-[#2c5f2d] hover:text-white"
-                      }`}
-                  >
-                    {totalPages}
-                  </button>
-                );
-              }
-
-              return pages;
-            })()}
-
-            {/* Next */}
-            <button
-              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
-              disabled={page === totalPages - 1}
-              className={`px-3 py-2 rounded-full border ${page === totalPages - 1
-                ? "text-gray-400 border-gray-200 cursor-not-allowed"
-                : "text-[#2c5f2d] border-[#2c5f2d] hover:bg-[#2c5f2d] hover:text-white transition"
-                }`}
-            >
-              →
-            </button>
-          </nav>
+        <div className="flex justify-center items-center gap-2 mt-6">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={(newPage) => setPage(newPage)}
+          />
         </div>
+
         {showToast && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          {/* Overlay mờ */}
-          <div className="absolute inset-0 bg-black/40"></div>
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            {/* Overlay mờ */}
+            <div className="absolute inset-0 bg-black/40"></div>
 
-          {/* Box thông báo */}
-          <div className="relative bg-white px-8 py-6 rounded-2xl shadow-xl text-center animate-scaleIn">
-            <div className="flex justify-center mb-6">
-              <CheckCircle2 className="w-20 h-20 text-green-600" />
+            {/* Box thông báo */}
+            <div className="relative bg-white px-8 py-6 rounded-2xl shadow-xl text-center animate-scaleIn">
+              <div className="flex justify-center mb-6">
+                <CheckCircle2 className="w-20 h-20 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-800">
+                Đã thêm vào giỏ hàng
+              </h3>
+              <p className="text-gray-500 text-sm mt-1">
+                Sản phẩm đã được thêm thành công
+              </p>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800">
-              Đã thêm vào giỏ hàng
-            </h3>
-            <p className="text-gray-500 text-sm mt-1">
-              Sản phẩm đã được thêm thành công
-            </p>
           </div>
-        </div>
-      )}
+        )}
       </main>
     </>
   );

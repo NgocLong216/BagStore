@@ -13,6 +13,7 @@ export default function CartPage() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteTargetId, setDeleteTargetId] = useState(null);
     const [deleteType, setDeleteType] = useState("single"); // "single" | "multiple"
+    const [showWarningModal, setShowWarningModal] = useState(false);
 
 
 
@@ -57,7 +58,7 @@ export default function CartPage() {
     }, []);
 
     useEffect(() => {
-        if (showDeleteModal) {
+        if (showDeleteModal || showWarningModal) {
             // Khoá scroll
             document.body.style.overflow = "hidden";
         } else {
@@ -68,7 +69,7 @@ export default function CartPage() {
         return () => {
             document.body.style.overflow = "auto";
         };
-    }, [showDeleteModal]);
+    }, [showDeleteModal, showWarningModal]);
 
 
     const recalcCartCount = (list) => {
@@ -79,7 +80,7 @@ export default function CartPage() {
 
     const handleCheckout = () => {
         if (selectedIds.length === 0 || totalPrice <= 0) {
-            alert("Vui lòng chọn sản phẩm hợp lệ");
+            setShowWarningModal(true);
             return;
         }
 
@@ -303,7 +304,7 @@ export default function CartPage() {
                                 <td className="p-3 border-b border-[#d6d6d6]">
                                     <button
                                         onClick={() => handleDelete(c.cart_id)}
-                                        className="text-red-700 font-semibold hover:underline"
+                                        className="text-red-700 font-semibold px-4 py-2 hover:bg-gray-100"
                                     >
                                         Xóa
                                     </button>
@@ -327,7 +328,7 @@ export default function CartPage() {
                         Chọn tất cả
                         <button
                             onClick={handleDeleteSelected}
-                            className="mx-10 text-red-700 font-semibold hover:underline"
+                            className="mx-10 text-red-700 font-semibold px-4 py-2 hover:bg-gray-100"
                         >
                             Xóa ({totalQuantity} sản phẩm)
                         </button>
@@ -383,6 +384,25 @@ export default function CartPage() {
                     </div>
                 </div>
             )}
+            {showWarningModal && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-lg p-6 w-[380px] text-center">
+                        <h3 className="text-lg font-bold text-gray-800 mb-3">
+                            Chưa chọn sản phẩm
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                            Vui lòng chọn ít nhất một sản phẩm để thanh toán.
+                        </p>
+                        <button
+                            onClick={() => setShowWarningModal(false)}
+                            className="bg-green-700 text-white px-6 py-2 rounded hover:bg-green-800 transition"
+                        >
+                            Đã hiểu
+                        </button>
+                    </div>
+                </div>
+            )}
+
 
         </div>
     );

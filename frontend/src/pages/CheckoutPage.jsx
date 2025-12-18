@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 export default function CheckoutPage() {
     const navigate = useNavigate();
     const location = useLocation();
+    const [errors, setErrors] = useState({});
+    const [shake, setShake] = useState({});
 
     const { items = [], totalPrice = 0 } = location.state || {};
 
@@ -19,16 +21,11 @@ export default function CheckoutPage() {
 
     // ===== SUBMIT ORDER =====
     const handlePlaceOrder = async () => {
-        if (!fullName || !phone || !address || !subAddress) {
-            alert("Vui lòng nhập đầy đủ thông tin giao hàng");
-            return;
-        }
+        setErrors({});
+        setShake({});
 
         const token = localStorage.getItem("token");
-        if (!token) {
-            alert("Bạn chưa đăng nhập");
-            return;
-        }
+        if (!token) return;
 
         try {
             setLoading(true);
@@ -55,7 +52,22 @@ export default function CheckoutPage() {
 
             const data = await res.json();
 
-            if (!res.ok) throw new Error("Đặt hàng thất bại");
+            if (!res.ok) {
+                if (data.errors) {
+                    setErrors(data.errors);
+
+                    // shake các field bị lỗi
+                    const shakeFields = {};
+                    Object.keys(data.errors).forEach(f => shakeFields[f] = true);
+                    setShake(shakeFields);
+
+                    // tắt shake sau 400ms
+                    setTimeout(() => setShake({}), 400);
+                    return;
+                }
+
+                throw new Error(data.message || "Đặt hàng thất bại");
+            }
 
             navigate("/order-success", {
                 state: {
@@ -66,12 +78,11 @@ export default function CheckoutPage() {
 
         } catch (err) {
             console.error(err);
-            console.log(items);
-            alert("Có lỗi xảy ra khi đặt hàng");
         } finally {
             setLoading(false);
         }
     };
+
 
     useEffect(() => {
         const fetchDefaultAddress = async () => {
@@ -136,38 +147,104 @@ export default function CheckoutPage() {
                     </h2>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input
-                            type="text"
-                            placeholder="Họ và tên"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            className="w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
-                        />
+                        <div>
+                            <input
+                                type="text"
+                                placeholder="Họ và tên"
+                                value={fullName}
+                                onChange={(e) => {
+                                    setFullName(e.target.value);
+                                    setErrors(prev => ({ ...prev, fullName: "" }));
+                                }}
+                                className={`
+                                    w-full px-5 py-3 rounded-lg text-base font-medium
+                                    focus:outline-none
+                                    ${errors.fullName
+                                        ? "border-2 border-red-500 bg-red-50 animate-shake"
+                                        : "bg-gray-200"}
+                                `}
+                            />
 
-                        <input
-                            type="text"
-                            placeholder="Số điện thoại"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            className="w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
-                        />
+                            {errors.fullName && (
+                                <p className="text-red-500 text-sm mt-1">
+                                    {errors.fullName}
+                                </p>
+                            )}
+                        </div>
 
-                        <input
-                            type="text"
-                            placeholder="Địa chỉ cụ thể (số nhà, đường...)"
-                            value={subAddress}
-                            onChange={(e) => setSubAddress(e.target.value)}
-                            className="w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
-                        />
+                        <div>
+                            <input
+                                type="text"
+                                placeholder="Số điện thoại"
+                                value={phone}
+                                onChange={(e) => {
+                                    setPhone(e.target.value);
+                                    setErrors(prev => ({ ...prev, phone: null }));
+                                }}
+                                className={`
+                                    w-full px-5 py-3 rounded-lg text-base font-medium focus:outline-none
+                                    ${errors.phone ? "border-2 border-red-500 bg-red-50" : "bg-gray-200"}
+                                    ${shake.phone ? "animate-shake" : ""}
+                                `}
+                            />
 
-                        <input
-                            type="text"
-                            placeholder="Phường / Quận / Tỉnh"
-                            value={address}
-                            onChange={(e) => setAddress(e.target.value)}
-                            className="w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
-                        />
+                            {errors.phone && (
+                                <p className="text-red-500 text-sm mt-1">
+                                    {errors.phone}
+                                </p>
+                            )}
 
+                        </div>
+
+                        <div>
+                            <input
+                                type="text"
+                                placeholder="Địa chỉ cụ thể (số nhà, đường...)"
+                                value={subAddress}
+                                onChange={(e) => {
+                                    setSubAddress(e.target.value);
+                                    setErrors(prev => ({ ...prev, subAddress: "" }));
+                                }}
+                                className={`
+                                    w-full px-5 py-3 rounded-lg text-base font-medium
+                                    focus:outline-none
+                                    ${errors.subAddress
+                                        ? "border-2 border-red-500 bg-red-50 animate-shake"
+                                        : "bg-gray-200"}
+                                `}
+                            />
+
+                            {errors.subAddress && (
+                                <p className="text-red-500 text-sm mt-1">
+                                    {errors.subAddress}
+                                </p>
+                            )}
+                        </div>
+
+                        <div>
+                            <input
+                                type="text"
+                                placeholder="Phường / Quận / Tỉnh"
+                                value={address}
+                                onChange={(e) => {
+                                    setAddress(e.target.value);
+                                    setErrors(prev => ({ ...prev, address: "" }));
+                                }}
+                                className={`
+                                    w-full px-5 py-3 rounded-lg text-base font-medium
+                                    focus:outline-none
+                                    ${errors.address
+                                        ? "border-2 border-red-500 bg-red-50 animate-shake"
+                                        : "bg-gray-200"}
+                                `}
+                            />
+
+                            {errors.address && (
+                                <p className="text-red-500 text-sm mt-1">
+                                    {errors.address}
+                                </p>
+                            )}
+                        </div>
 
                         <textarea
                             placeholder="Ghi chú (tuỳ chọn)"
@@ -224,7 +301,7 @@ export default function CheckoutPage() {
                                 <div className="flex-1">
                                     <p className="font-medium">{item.name}</p>
                                     <p className="text-sm text-gray-500">
-                                        SL: {item.quantity}
+                                        x{item.quantity}
                                     </p>
                                 </div>
 
