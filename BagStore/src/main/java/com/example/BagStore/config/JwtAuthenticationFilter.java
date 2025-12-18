@@ -65,26 +65,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         Claims claims = jwtUtil.getClaims(token);
-        String username = claims.getSubject();
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            userRepository.findByUsername(username).ifPresent(user -> {
-                // Gói User vào CustomUserDetails
+        String email = claims.getSubject(); //  EMAIL
+        String role = claims.get("role", String.class); //  ROLE_USER
+
+        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+            userRepository.findByEmail(email).ifPresent(user -> {
+
                 CustomUserDetails userDetails = new CustomUserDetails(user);
-
-                String role = "ROLE_" + user.getRole().toUpperCase();
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
-                                userDetails, // ✅ principal giờ là CustomUserDetails
+                                userDetails,
                                 null,
-                                List.of(new SimpleGrantedAuthority(role))
+                                List.of(new SimpleGrantedAuthority(role)) //  KHÔNG GHÉP ROLE_
                         );
 
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                );
+
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             });
         }
+
 
         filterChain.doFilter(request, response);
     }

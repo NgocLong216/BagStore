@@ -1,5 +1,6 @@
 package com.example.BagStore.controller.auth;
 
+import com.example.BagStore.config.JwtUtil;
 import com.example.BagStore.dto.GoogleLoginRequest;
 import com.example.BagStore.dto.GoogleUserInfo;
 import com.example.BagStore.dto.LoginRequest;
@@ -8,7 +9,6 @@ import com.example.BagStore.entity.User;
 import com.example.BagStore.repository.UserRepository;
 import com.example.BagStore.service.AuthService;
 import com.example.BagStore.service.GoogleAuthService;
-import com.example.BagStore.service.JwtService;
 import com.example.BagStore.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,7 @@ public class AuthController {
     private UserRepository userRepository;
 
     @Autowired
-    private JwtService jwtService;
+    private JwtUtil jwtUtil;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
@@ -92,7 +92,7 @@ public class AuthController {
                     .body("Tài khoản đã bị khóa");
         }
 
-        String jwt = jwtService.generateToken(user);
+        String jwt = jwtUtil.generateToken(user);
 
         return ResponseEntity.ok(Map.of(
                 "token", jwt,

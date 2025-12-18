@@ -12,9 +12,12 @@ export default function Sidebar() {
   // Lấy user từ localStorage
   const savedUser = JSON.parse(localStorage.getItem("user")) || {};
   const username = savedUser.username || "Khách";
-  const avatar = savedUser.avatar
-  ? `http://localhost:8080${savedUser.avatar}`
+  const avatar = savedUser?.avatar
+  ? savedUser.avatar.startsWith("http")
+    ? savedUser.avatar
+    : `http://localhost:8080${savedUser.avatar}`
   : "https://hanoidep.vn/wp-content/uploads/2025/11/avatar-trang-4.webp";
+
 
   
   const menuItems = [

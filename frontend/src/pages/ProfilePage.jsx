@@ -167,10 +167,17 @@ export default function ProfilePage() {
           {/* Upload Photo */}
           <div className="w-1/2 text-center">
             <img
-              src={avatar ? `http://localhost:8080${avatar}` : "https://hanoidep.vn/wp-content/uploads/2025/11/avatar-trang-4.webp"}
+              src={
+                avatar
+                  ? avatar.startsWith("http")
+                    ? avatar
+                    : `http://localhost:8080${avatar}`
+                  : "https://hanoidep.vn/wp-content/uploads/2025/11/avatar-trang-4.webp"
+              }
               alt="avatar"
               className="w-24 h-24 rounded-full mx-auto mb-4"
             />
+
 
             <label
               htmlFor="upload"

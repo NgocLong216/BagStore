@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
+import AdminLayout from "./layouts/AdminLayout";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import ProductPage from "./pages/ProductPage";
@@ -19,6 +20,10 @@ import OrderSuccessPage from "./pages/OrderSuccessPage";
 import OrderListPage from "./pages/OrderListPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 
+import AdminPage from "./pages/AdminPage";
+import AdminRoute from "./routes/AdminRoute";
+
+
 function App() {
   const [user, setUser] = useState(null);
 
@@ -36,10 +41,11 @@ function App() {
 
 
   return (
-    <MainLayout user={user}>
-      <Routes>
+    <Routes>
+      {/* USER LAYOUT */}
+      <Route element={<MainLayout user={user} />}>
         <Route path="/" element={<HomePage user={user} />} />
-        <Route path="/login"  element={<LoginPage setUser={setUser} />} />
+        <Route path="/login" element={<LoginPage setUser={setUser} />} />
         <Route path="/products" element={<ProductPage user={user} />} />
         <Route path="/product/:id" element={<ProductInfoPage />} />
         <Route path="/contact" element={<ContactPage />} />
@@ -55,8 +61,20 @@ function App() {
         <Route path="/order-success" element={<OrderSuccessPage />} />
         <Route path="/orders" element={<OrderListPage />} />
         <Route path="/orders/:orderId" element={<OrderDetailPage />} />
-      </Routes>
-    </MainLayout>
+      </Route>
+
+      {/* ADMIN LAYOUT (KHÔNG HEADER / FOOTER) */}
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        }
+      >
+        <Route index element={<AdminPage />} />
+      </Route>
+    </Routes>
   );
 }
 

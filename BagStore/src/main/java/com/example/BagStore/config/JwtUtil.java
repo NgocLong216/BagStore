@@ -14,32 +14,29 @@ import java.util.Date;
 public class JwtUtil {
 
     @Value("${jwt.secret}")
-    private String secret; // Chuỗi key bí mật (tối thiểu 32 ký tự cho HS256)
+    private String secret;
 
     @Value("${jwt.expiration-ms}")
-    private long expirationMs; // Thời hạn token (ms)
+    private long expirationMs;
 
-    // Lấy key từ secret
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    // Sinh token cho user
     public String generateToken(User user) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
-                .setSubject(user.getUsername())
+                .setSubject(user.getEmail()) // ✅ DÙNG EMAIL
                 .claim("userId", user.getUserId())
-                .claim("role", user.getRole())
+                .claim("role", "ROLE_" + user.getRole())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(SignatureAlgorithm.HS256, getSigningKey())
+                .signWith(getSigningKey())
                 .compact();
     }
 
-    // Kiểm tra token hợp lệ
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
@@ -47,12 +44,11 @@ public class JwtUtil {
                     .build()
                     .parseClaimsJws(token);
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
+        } catch (JwtException e) {
             return false;
         }
     }
 
-    // Lấy claims từ token (Giải mã token để lấy thông tin user)
     public Claims getClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
@@ -61,3 +57,4 @@ public class JwtUtil {
                 .getBody();
     }
 }
+

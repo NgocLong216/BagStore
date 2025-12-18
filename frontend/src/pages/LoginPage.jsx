@@ -36,7 +36,11 @@ export default function LoginPage({ setUser }) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
         setUser(data.user);
-        navigate("/");
+        if (data.user.role === "ADMIN") {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
       } catch (err) {
         setError(err.message);
       }
@@ -70,7 +74,11 @@ export default function LoginPage({ setUser }) {
       console.log("Login success:", data);
 
       setTimeout(() => {
-        navigate("/");
+        if (data.user.role === "ADMIN") {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
       }, 1000);
     } catch (err) {
       setError(err.message);
