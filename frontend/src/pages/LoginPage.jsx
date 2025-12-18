@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { FaUser, FaLock, FaEnvelope, FaFacebook, FaGoogle } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
+import { useGoogleLogin } from "@react-oauth/google";
 
 
 export default function LoginPage({ setUser }) {
@@ -13,6 +15,37 @@ export default function LoginPage({ setUser }) {
 
 
   const API_URL = "http://localhost:8080/api/auth";
+
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const res = await fetch("http://localhost:8080/api/auth/google", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token: tokenResponse.access_token,
+          }),
+        });
+
+        if (!res.ok) throw new Error("Đăng nhập Google thất bại");
+
+        const data = await res.json();
+
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        setUser(data.user);
+        navigate("/");
+      } catch (err) {
+        setError(err.message);
+      }
+    },
+    onError: () => {
+      setError("Đăng nhập Google thất bại");
+    },
+  });
+
 
   // Handle Login
   const handleLogin = async (e) => {
@@ -118,7 +151,18 @@ export default function LoginPage({ setUser }) {
             >
               Đăng Nhập
             </button>
-            <p className="mt-4 text-sm">hoặc đăng nhập bằng</p> <div className="flex justify-center mt-3 space-x-3"> <a href="#" className="p-3 border-2 border-gray-400 rounded-lg text-xl text-gray-700" > <FaFacebook /> </a> <a href="#" className="p-3 border-2 border-gray-400 rounded-lg text-xl text-gray-700" > <FaGoogle /> </a> </div>
+            <p className="mt-4 text-sm">hoặc đăng nhập bằng</p>
+            <div className="flex justify-center mt-3 space-x-3">
+              <a href="#" className="p-3 border-2 border-gray-400 rounded-lg text-xl text-gray-700" > <FaFacebook /> </a>
+              <a href="#"
+                className="p-3 border-2 border-gray-400 rounded-lg text-xl text-gray-700"
+                onClick={(e) => {
+                  e.preventDefault();
+                  loginWithGoogle();
+                }}
+              > <FaGoogle />
+              </a>
+            </div>
           </form>
         </div>
 

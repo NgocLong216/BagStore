@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
                 "errors", errors
         ));
     }
-    
+
 
 
 @ExceptionHandler(RuntimeException.class)

@@ -32,9 +32,9 @@ public class SecurityConfig {
             "/swagger-resources/**",
             "/webjars/**",
             "/v3/api-docs/swagger-config",
-
             "/avatars/**",
             "/static/**",
+            "/api/auth/google"
     };
 
     @Bean

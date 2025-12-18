@@ -1,9 +1,14 @@
 package com.example.BagStore.controller.auth;
 
+import com.example.BagStore.dto.GoogleLoginRequest;
+import com.example.BagStore.dto.GoogleUserInfo;
 import com.example.BagStore.dto.LoginRequest;
 import com.example.BagStore.dto.SignupRequest;
 import com.example.BagStore.entity.User;
+import com.example.BagStore.repository.UserRepository;
 import com.example.BagStore.service.AuthService;
+import com.example.BagStore.service.GoogleAuthService;
+import com.example.BagStore.service.JwtService;
 import com.example.BagStore.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
@@ -19,6 +25,15 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private GoogleAuthService googleAuthService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private JwtService jwtService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
@@ -36,6 +51,53 @@ public class AuthController {
     public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest request) {
         User user = authService.signup(request.getUsername(), request.getEmail(), request.getPassword());
         return ResponseEntity.ok(user);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<?> loginWithGoogle(
+            @RequestBody GoogleLoginRequest request
+    ) {
+        GoogleUserInfo googleUser =
+                googleAuthService.getUserInfo(request.getToken());
+
+        if (googleUser.getEmail() == null) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Không lấy được email từ Google");
+        }
+
+        User user = userRepository
+                .findByEmail(googleUser.getEmail())
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setEmail(googleUser.getEmail());
+                    newUser.setUsername(
+                            googleUser.getName() != null
+                                    ? googleUser.getName()
+                                    : googleUser.getEmail()
+                    );
+                    newUser.setPassword(null);      // Google account
+                    newUser.setPhone(null);
+                    newUser.setRole("USER");
+                    newUser.setAvatar(googleUser.getPicture());
+                    newUser.setActive(true);
+                    newUser.setCreatedAt(LocalDateTime.now());
+                    return userRepository.save(newUser);
+                });
+
+        //  Nếu account bị khóa
+        if (Boolean.FALSE.equals(user.getActive())) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("Tài khoản đã bị khóa");
+        }
+
+        String jwt = jwtService.generateToken(user);
+
+        return ResponseEntity.ok(Map.of(
+                "token", jwt,
+                "user", user
+        ));
     }
 
 }

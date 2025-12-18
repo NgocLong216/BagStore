@@ -16,6 +16,7 @@ public class User {
     @Column(name = "user_id")
     private Integer userId;
 
+    @Column(columnDefinition = "NVARCHAR(255)")
     private String username;
     private String phone;
     private String email;
