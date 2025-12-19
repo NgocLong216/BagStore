@@ -4,6 +4,7 @@ import com.example.BagStore.config.JwtUtil;
 import com.example.BagStore.dto.LoginRequest;
 import com.example.BagStore.dto.LoginResponse;
 import com.example.BagStore.entity.User;
+import com.example.BagStore.enums.Role;
 import com.example.BagStore.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -87,7 +88,7 @@ public class AuthService {
         user.setUsername(username);
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
-        user.setRole("USER");
+        user.setRole(Role.USER);
         user.setCreatedAt(LocalDateTime.now());
         user.setActive(true);
 

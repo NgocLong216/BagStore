@@ -6,6 +6,7 @@ import com.example.BagStore.dto.GoogleUserInfo;
 import com.example.BagStore.dto.LoginRequest;
 import com.example.BagStore.dto.SignupRequest;
 import com.example.BagStore.entity.User;
+import com.example.BagStore.enums.Role;
 import com.example.BagStore.repository.UserRepository;
 import com.example.BagStore.service.AuthService;
 import com.example.BagStore.service.GoogleAuthService;
@@ -78,7 +79,7 @@ public class AuthController {
                     );
                     newUser.setPassword(null);      // Google account
                     newUser.setPhone(null);
-                    newUser.setRole("USER");
+                    newUser.setRole(Role.USER);
                     newUser.setAvatar(googleUser.getPicture());
                     newUser.setActive(true);
                     newUser.setCreatedAt(LocalDateTime.now());

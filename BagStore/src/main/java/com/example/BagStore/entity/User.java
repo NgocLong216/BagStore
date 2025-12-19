@@ -1,5 +1,6 @@
 package com.example.BagStore.entity;
 
+import com.example.BagStore.enums.Role;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,7 +22,9 @@ public class User {
     private String phone;
     private String email;
     private String password;
-    private String role;
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
     @Column(name = "avatar")
     private String avatar;

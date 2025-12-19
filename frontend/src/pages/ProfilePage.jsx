@@ -174,7 +174,11 @@ export default function ProfilePage() {
                     : `http://localhost:8080${avatar}`
                   : "https://hanoidep.vn/wp-content/uploads/2025/11/avatar-trang-4.webp"
               }
+              
               alt="avatar"
+              onError={(e) => {
+                e.currentTarget.src = "https://hanoidep.vn/wp-content/uploads/2025/11/avatar-trang-4.webp";
+              }}
               className="w-24 h-24 rounded-full mx-auto mb-4"
             />
 

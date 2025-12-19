@@ -35,6 +35,9 @@ export default function Sidebar() {
         <img
           src={avatar}
           alt="avatar"
+          onError={(e) => {
+            e.currentTarget.src = "https://hanoidep.vn/wp-content/uploads/2025/11/avatar-trang-4.webp";
+          }}
           className="w-16 h-16 rounded-full mx-auto"
         />
         <div className="mt-3 font-bold">{username}</div>
