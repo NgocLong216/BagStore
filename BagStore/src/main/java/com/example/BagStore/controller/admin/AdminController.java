@@ -1,5 +1,6 @@
 package com.example.BagStore.controller.admin;
 
+import com.example.BagStore.dto.UserResponse;
 import com.example.BagStore.entity.User;
 import com.example.BagStore.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ public class AdminController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users")
-    public List<User> getAllUsers() {
+    public List<UserResponse> getAllUsers() {
         return userService.getAll();
     }
 }

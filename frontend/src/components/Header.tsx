@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaSearch, FaUserCircle, FaShoppingCart, FaAddressBook, FaListAlt, FaSignOutAlt } from "react-icons/fa";
+import { FaSearch, FaUserCircle, FaShoppingCart, FaAddressBook, FaListAlt, FaSignOutAlt, FaChartBar } from "react-icons/fa";
 import { useCart } from "../contexts/CartContext";
 
 export default function Header({ user }) {
@@ -115,36 +115,69 @@ export default function Header({ user }) {
             >
               <FaUserCircle className="text-2xl hover:text-[#d4a373]" />
             </button>
+
             <span className="text-sm font-medium">{user.username}</span>
+
             {dropdownOpen && (
-              <div className="absolute top-[120%] left-0 bg-white text-gray-700 rounded-md shadow-lg w-40">
-                <Link
-                  to="/profile"
-                  className="flex items-center px-4 py-2 hover:bg-gray-100 rounded-md"
-                >
-                  <FaAddressBook className="text-[#d4a373] mr-2" /> Hồ sơ
-                </Link>
-                <Link
-                  to="/orders"
-                  className="flex items-center px-4 py-2 hover:bg-gray-100 rounded-md"
-                >
-                  <FaListAlt className="text-[#d4a373] mr-2" /> Đơn mua
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center w-full text-left px-4 py-2 hover:bg-gray-100 rounded-md"
-                >
-                  <FaSignOutAlt className="text-[#d4a373] mr-2" /> Đăng xuất
-                </button>
+              <div className="absolute top-[120%] left-0 bg-white text-gray-700 rounded-md shadow-lg w-44">
+
+                {/* ===== ADMIN ===== */}
+                {user.role === "ADMIN" ? (
+                  <>
+                    <Link
+                      to="/admin"
+                      className="flex items-center px-4 py-2 hover:bg-gray-100 rounded-md"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <FaChartBar className="text-[#d4a373] mr-2" />
+                      Quản lý
+                    </Link>
+
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center w-full text-left px-4 py-2 hover:bg-gray-100 rounded-md"
+                    >
+                      <FaSignOutAlt className="text-[#d4a373] mr-2" />
+                      Đăng xuất
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {/* ===== USER THƯỜNG ===== */}
+                    <Link
+                      to="/profile"
+                      className="flex items-center px-4 py-2 hover:bg-gray-100 rounded-md"
+                    >
+                      <FaAddressBook className="text-[#d4a373] mr-2" />
+                      Hồ sơ
+                    </Link>
+
+                    <Link
+                      to="/orders"
+                      className="flex items-center px-4 py-2 hover:bg-gray-100 rounded-md"
+                    >
+                      <FaListAlt className="text-[#d4a373] mr-2" />
+                      Đơn mua
+                    </Link>
+
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center w-full text-left px-4 py-2 hover:bg-gray-100 rounded-md"
+                    >
+                      <FaSignOutAlt className="text-[#d4a373] mr-2" />
+                      Đăng xuất
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
-
         ) : (
           <Link to="/login" className="ml-4">
             <FaUserCircle className="text-2xl hover:text-[#d4a373]" />
           </Link>
         )}
+
 
         {/* Cart icon */}
         <Link to="/cart" className="relative ml-4 hover:text-[#d4a373]">

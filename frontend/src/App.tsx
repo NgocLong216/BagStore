@@ -20,8 +20,11 @@ import OrderSuccessPage from "./pages/OrderSuccessPage";
 import OrderListPage from "./pages/OrderListPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 
-import AdminPage from "./pages/AdminPage";
 import AdminRoute from "./routes/AdminRoute";
+import AdminPage from "./pages/admin/AdminPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
+// import AdminProductsPage from "./pages/admin/AdminProductsPage";
+
 
 
 function App() {
@@ -73,6 +76,8 @@ function App() {
         }
       >
         <Route index element={<AdminPage />} />
+        <Route path="users" element={<AdminUsersPage />} />
+        {/* <Route path="products" element={<AdminProductsPage />} /> */}
       </Route>
     </Routes>
   );

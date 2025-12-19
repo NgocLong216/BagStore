@@ -104,8 +104,19 @@ public class UserService {
         }
     }
 
-    public List<User> getAll() {
-        return userRepository.findAll();
+    public List<UserResponse> getAll() {
+        return userRepository.findAll()
+                .stream()
+                .map(user -> new UserResponse(
+                        user.getUserId(),
+                        user.getUsername(),
+                        user.getPhone(),
+                        user.getEmail(),
+                        user.getRole(),
+                        user.getActive(),
+                        user.getAvatar()
+                ))
+                .toList();
     }
 }
 
