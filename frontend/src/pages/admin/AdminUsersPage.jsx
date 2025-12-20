@@ -298,7 +298,7 @@ export default function AdminUsersPage() {
 
             {/* RIGHT PROFILE */}
             {selectedUser && (
-              <aside className="w-80 p-6 rounded-xl">
+              <aside className="w-80 p-6 rounded-xl sticky top-24 h-fit">
                 <div className="flex flex-col items-center text-center">
                   <img
                     src={selectedUser.avatar ? (selectedUser.avatar.startsWith("http") ? selectedUser.avatar : `http://localhost:8080${selectedUser.avatar}`) : "https://hanoidep.vn/wp-content/uploads/2025/11/avatar-trang-4.webp"}

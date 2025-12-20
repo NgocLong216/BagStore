@@ -23,7 +23,7 @@ import OrderDetailPage from "./pages/OrderDetailPage";
 import AdminRoute from "./routes/AdminRoute";
 import AdminPage from "./pages/admin/AdminPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
-// import AdminProductsPage from "./pages/admin/AdminProductsPage";
+import AdminProductsPage from "./pages/admin/AdminProductsPage";
 
 
 
@@ -77,7 +77,7 @@ function App() {
       >
         <Route index element={<AdminPage />} />
         <Route path="users" element={<AdminUsersPage />} />
-        {/* <Route path="products" element={<AdminProductsPage />} /> */}
+        <Route path="products" element={<AdminProductsPage />} />
       </Route>
     </Routes>
   );

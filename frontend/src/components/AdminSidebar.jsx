@@ -19,7 +19,7 @@ export default function AdminSidebar() {
      }`;
 
   return (
-    <aside className="w-64 bg-[#2c5f2d] text-white flex flex-col min-h-screen">
+    <aside className="w-64 bg-[#2c5f2d] text-white flex flex-col h-screen sticky top-0">
       {/* Logo */}
       <div
         className="p-6 text-2xl font-bold flex justify-center border-b border-white/20 cursor-pointer hover:text-green-300"

@@ -2,10 +2,13 @@ package com.example.BagStore.controller.admin;
 
 import com.example.BagStore.config.JwtUtil;
 import com.example.BagStore.dto.CreateUserRequest;
+import com.example.BagStore.dto.ProductResponseDTO;
 import com.example.BagStore.dto.UpdateUserRequest;
 import com.example.BagStore.dto.UserResponse;
+import com.example.BagStore.entity.Product;
 import com.example.BagStore.entity.User;
 import com.example.BagStore.security.CustomUserDetails;
+import com.example.BagStore.service.ProductService;
 import com.example.BagStore.service.UserService;
 import io.jsonwebtoken.Jwt;
 import jakarta.validation.Valid;
@@ -32,6 +35,9 @@ public class AdminController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ProductService productService;
 
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -93,6 +99,11 @@ public class AdminController {
                     Map.of("message", e.getMessage())
             );
         }
+    }
+
+    @GetMapping("/products")
+    public List<ProductResponseDTO> getAll() {
+        return productService.getAll();
     }
 
 }

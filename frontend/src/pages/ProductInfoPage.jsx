@@ -37,7 +37,7 @@ export default function ProductInfoPage({ user }) {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                // 1️⃣ Product detail
+                // 1️ Product detail
                 const res = await fetch(`http://localhost:8080/api/products/details/${id}`);
                 if (!res.ok) throw new Error("Không tìm thấy sản phẩm");
                 const data = await res.json();
@@ -54,7 +54,7 @@ export default function ProductInfoPage({ user }) {
 
                 setSpecs(data.specifications || []);
 
-                // 2️⃣ Product images (API RIÊNG)
+                // 2 Product images (API RIÊNG)
                 const imgRes = await fetch(
                     `http://localhost:8080/api/products/${id}/images`
                 );
@@ -334,7 +334,7 @@ export default function ProductInfoPage({ user }) {
                     </div>
 
                     {specs.length > 0 && (
-                        <ul className="text-gray-700 space-y-2">
+                        <ul className="text-gray-600 space-y-2">
                             {specs.map((s, idx) => (
                                 <li key={idx}>
                                     <strong>{s.specName}:</strong> {s.specValue}
@@ -364,7 +364,7 @@ export default function ProductInfoPage({ user }) {
                     ))}
                 </div>
 
-                <div className="p-6 bg-white shadow-md">
+                <div className="p-6 bg-white text-gray-600 shadow-md">
                     {/* Chi tiết */}
                     {activeTab === "details" && (
                         <p style={{ whiteSpace: "pre-line" }}>{product.detail}</p>

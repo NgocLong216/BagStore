@@ -1,84 +1,188 @@
 import { useEffect, useState } from "react";
+import {
+  FaSearch,
+  FaEdit,
+  FaTrash,
+  FaBoxOpen,
+  FaTags,
+  FaWarehouse
+} from "react-icons/fa";
+import { IoIosAddCircleOutline } from "react-icons/io";
+import AdminSidebar from "../../components/AdminSidebar";
+import AdminHeader from "../../components/AdminHeader";
 
 export default function AdminProductsPage() {
-  const [users, setUsers] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  /* ================= FETCH ================= */
   useEffect(() => {
-    const fetchUsers = async () => {
-      const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:8080/api/admin/users", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const fetchProducts = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:8080/api/admin/products", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-      if (res.ok) {
-        setUsers(await res.json());
+        if (!res.ok) throw new Error("Không thể tải danh sách sản phẩm");
+
+        const data = await res.json();
+        setProducts(data);
+        setFilteredProducts(data);
+        setSelectedProduct(data[0] || null);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchUsers();
+    fetchProducts();
   }, []);
 
+  /* ================= SEARCH ================= */
+  useEffect(() => {
+    const f = products.filter(p =>
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.category?.toLowerCase().includes(search.toLowerCase())
+    );
+    setFilteredProducts(f);
+  }, [search, products]);
+
+  const getProductImage = (p) => {
+    if (!p.thumbnail) {
+      return "https://placehold.co/300x300?text=No+Image";
+    }
+  
+    return p.thumbnail.startsWith("http")
+      ? p.thumbnail
+      : `http://localhost:8080${p.thumbnail}`;
+  };
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Quản lý người dùng</h1>
+    <div className="flex min-h-screen bg-gray-100">
+      <AdminSidebar />
 
-      <div className="bg-white rounded-xl shadow overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-100 text-left">
-            <tr>
-              <th className="p-4">Avatar</th>
-              <th className="p-4">Username</th>
-              <th className="p-4">Email</th>
-              <th className="p-4">Phone</th>
-              <th className="p-4">Role</th>
-              <th className="p-4">Active</th>
-              <th className="p-4">Created</th>
-            </tr>
-          </thead>
+      <main className="flex-1">
+        <AdminHeader title="Quản Lý Sản Phẩm" />
 
-          <tbody>
-            {users.map((u) => (
-              <tr
-                key={u.userId}
-                className="border-t hover:bg-gray-50"
-              >
-                <td className="p-4">
+        <div className="p-8">
+          {/* TOP BAR */}
+          <div className="flex gap-4 mb-6 w-[70%]">
+            <div className="flex items-center gap-3 bg-white px-4 rounded-lg shadow w-[500px]">
+              <FaSearch className="text-gray-400" />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Tìm theo tên hoặc danh mục..."
+                className="w-full outline-none"
+              />
+            </div>
+
+            <div className="flex-1" />
+
+            <button className="flex items-center gap-2 bg-green-700 text-white font-bold p-3 rounded-lg shadow hover:bg-green-900">
+              <IoIosAddCircleOutline size={22} />
+              Thêm sản phẩm
+            </button>
+          </div>
+
+          <div className="flex justify-between">
+            {/* TABLE */}
+            <div className="bg-white rounded-xl shadow overflow-hidden w-[70%]">
+              {loading && <p className="p-4">Đang tải...</p>}
+              {error && <p className="p-4 text-red-600">{error}</p>}
+
+              {!loading && !error && (
+                <table className="w-full text-left">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="p-4">Sản phẩm</th>
+                      <th className="p-4">ID</th>
+                      <th className="p-4">Danh mục</th>
+                      <th className="p-4">Tồn kho</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredProducts.map(p => (
+                      <tr
+                        key={p.productId}
+                        onClick={() => setSelectedProduct(p)}
+                        className={`border-t cursor-pointer
+                        ${selectedProduct?.productId === p.productId
+                          ? "bg-green-600 text-white"
+                          : "hover:bg-gray-50"}
+                        `}
+                      >
+                        <td className="p-4 flex items-center gap-3">
+                          <img
+                            src={getProductImage(p)}
+                            className="w-10 h-10 rounded object-cover"
+                          />
+                          {p.name}
+                        </td>
+                        <td className="p-4">{p.productId}</td>
+                        <td className="p-4">{p.category}</td>
+                        <td className="p-4">
+                          {p.stock > 0 ? p.stock : "Hết hàng"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* RIGHT DETAIL */}
+            {selectedProduct && (
+              <aside className="w-80 p-6 sticky top-24 h-fit">
+                <div className="rounded-xl p-6 text-center">
                   <img
-                    src={
-                      u.avatar
-                        ? `http://localhost:8080${u.avatar}`
-                        : "https://i.pravatar.cc/40"
-                    }
-                    className="w-10 h-10 rounded-full"
+                    src={getProductImage(selectedProduct)}
+                    className="w-40 h-40 mx-auto rounded object-cover mb-4"
                   />
-                </td>
-                <td className="p-4 font-medium">{u.username}</td>
-                <td className="p-4">{u.email}</td>
-                <td className="p-4">{u.phone || "-"}</td>
-                <td className="p-4">
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-semibold ${
-                      u.role === "ADMIN"
-                        ? "bg-red-100 text-red-600"
-                        : "bg-green-100 text-green-600"
-                    }`}
-                  >
-                    {u.role}
-                  </span>
-                </td>
-                <td className="p-4">
-                  {u.active ? "✅" : "❌"}
-                </td>
-                <td className="p-4 text-sm text-gray-500">
-                  {u.createdAt?.slice(0, 10)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+
+                  <h2 className="text-xl font-bold">
+                    {selectedProduct.name}
+                  </h2>
+
+                  <p className="text-gray-500 mb-4">
+                    {selectedProduct.category}
+                  </p>
+
+                  <p className="text-lg font-semibold text-green-700 mb-2">
+                    {selectedProduct.price?.toLocaleString()} đ
+                  </p>
+
+                  <p className={`text-sm font-semibold mb-4
+                    ${selectedProduct.stock > 0
+                      ? "text-green-600"
+                      : "text-red-600"}
+                  `}>
+                    {selectedProduct.stock > 0
+                      ? "Còn hàng"
+                      : "Hết hàng"}
+                  </p>
+
+                  <div className="flex justify-center gap-4">
+                    <button className="p-3 bg-white text-green-700 rounded-lg hover:bg-gray-200">
+                      <FaEdit />
+                    </button>
+
+                    <button className="p-3 bg-white text-red-700 rounded-lg hover:bg-red-200">
+                      <FaTrash />
+                    </button>
+                  </div>
+                </div>
+              </aside>
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

@@ -1,8 +1,6 @@
 package com.example.BagStore.service;
 
-import com.example.BagStore.dto.ProductDetailDTO;
-import com.example.BagStore.dto.ProductDTO;
-import com.example.BagStore.dto.SpecificationDTO;
+import com.example.BagStore.dto.*;
 import com.example.BagStore.entity.Product;
 import com.example.BagStore.entity.ProductImage;
 import com.example.BagStore.entity.ProductSpecification;
@@ -17,6 +15,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,8 +50,65 @@ public class ProductService {
                 .toList();
     }
 
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    public ProductResponseDTO toDTO(Product p) {
+        String thumbnail = null;
+
+        if (p.getImages() != null && !p.getImages().isEmpty()) {
+            thumbnail = p.getImages().get(0).getImageUrl();
+        }
+
+        return ProductResponseDTO.builder()
+                .productId(p.getProductId())
+                .name(p.getName())
+                .price(p.getPrice())
+                .stock(p.getStock())
+                .category(p.getCategory())
+                .thumbnail(thumbnail)
+                .build();
+    }
+
+    public List<ProductResponseDTO> getAll() {
+        return productRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
+
+
+    public Product create(ProductRequestDTO dto) {
+        Product product = Product.builder()
+                .name(dto.getName())
+                .description(dto.getDescription())
+                .detail(dto.getDetail())
+                .price(dto.getPrice())
+                .stock(dto.getStock())
+                .category(dto.getCategory())
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        return productRepository.save(product);
+    }
+
+    public Product getById(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+    }
+
+    public Product update(Long id, ProductRequestDTO dto) {
+        Product p = getById(id);
+
+        p.setName(dto.getName());
+        p.setDescription(dto.getDescription());
+        p.setDetail(dto.getDetail());
+        p.setPrice(dto.getPrice());
+        p.setStock(dto.getStock());
+        p.setCategory(dto.getCategory());
+
+        return productRepository.save(p);
+    }
+
+    public void delete(Long id) {
+        productRepository.deleteById(id);
     }
 
     public Page<ProductDTO> getProducts(
