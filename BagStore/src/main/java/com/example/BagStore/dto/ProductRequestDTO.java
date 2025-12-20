@@ -11,4 +11,5 @@ public class ProductRequestDTO {
     private BigDecimal price;
     private Integer stock;
     private String category;
+    private String imageUrl;
 }

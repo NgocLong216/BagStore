@@ -9,6 +9,7 @@ import com.example.BagStore.repository.ProductRepository;
 import com.example.BagStore.repository.ProductSpecificationRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -75,18 +76,40 @@ public class ProductService {
     }
 
 
-    public Product create(ProductRequestDTO dto) {
+    @Transactional
+    public ProductDTO createProduct(ProductRequestDTO req) {
+
+        // 1. Lưu product
         Product product = Product.builder()
-                .name(dto.getName())
-                .description(dto.getDescription())
-                .detail(dto.getDetail())
-                .price(dto.getPrice())
-                .stock(dto.getStock())
-                .category(dto.getCategory())
+                .name(req.getName())
+                .description(req.getDescription())
+                .detail(req.getDetail())
+                .price(req.getPrice())
+                .stock(req.getStock())
+                .category(req.getCategory())
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        return productRepository.save(product);
+        Product savedProduct = productRepository.save(product);
+
+        // 2. Lưu ảnh (nếu có)
+        if (req.getImageUrl() != null && !req.getImageUrl().isBlank()) {
+            ProductImage image = ProductImage.builder()
+                    .imageUrl(req.getImageUrl())
+                    .product(savedProduct)
+                    .build();
+
+            productImageRepository.save(image);
+        }
+
+        // 3. Trả DTO cho frontend
+        return new ProductDTO(
+                savedProduct.getProductId(),
+                savedProduct.getName(),
+                savedProduct.getPrice(),
+                req.getImageUrl(),
+                savedProduct.getStock()
+        );
     }
 
     public Product getById(Long id) {

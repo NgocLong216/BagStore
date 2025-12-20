@@ -15,7 +15,16 @@ export default function CartPage() {
     const [deleteType, setDeleteType] = useState("single"); // "single" | "multiple"
     const [showWarningModal, setShowWarningModal] = useState(false);
 
-
+    const resolveImageUrl = (url) => {
+        if (!url) return "/images/default.jpg";
+      
+        // URL đầy đủ
+        if (url.startsWith("http")) return url;
+      
+        // Ảnh upload từ backend
+        return `http://localhost:8080${url}`;
+      };
+      
 
     // Gọi API lấy giỏ hàng
     useEffect(() => {
@@ -39,7 +48,7 @@ export default function CartPage() {
                     product_id: c.product?.productId,
                     name: c.product?.name || "Sản phẩm",
                     price: c.product?.price || 0,
-                    image_url: c.product?.imageUrl || "/images/default.jpg",
+                    image_url: c.product?.imageUrl || null,
                     quantity: c.quantity,
                     stock: c.product?.stock || 1, // thêm số lượng tồn kho
                 }));
@@ -276,9 +285,9 @@ export default function CartPage() {
                                 </td>
                                 <td className="p-3 border-b border-[#d6d6d6] flex justify-center">
                                     <img
-                                        src={c.image_url}
+                                        src={resolveImageUrl(c.image_url)}
                                         alt={c.name}
-                                        className="w-16 h-auto rounded text-base"
+                                        className="w-16 h-16 object-cover rounded text-base"
                                     />
                                 </td>
                                 <td className="p-3 border-b border-[#d6d6d6]">{c.name}</td>

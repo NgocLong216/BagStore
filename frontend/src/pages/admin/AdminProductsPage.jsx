@@ -7,6 +7,7 @@ import {
   FaTags,
   FaWarehouse
 } from "react-icons/fa";
+import { MdErrorOutline } from "react-icons/md";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import AdminSidebar from "../../components/AdminSidebar";
 import AdminHeader from "../../components/AdminHeader";
@@ -18,6 +19,79 @@ export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // add
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    price: "",
+    stock: "",
+    category: "",
+  });
+
+  const [imageFile, setImageFile] = useState(null);
+
+
+  const handleCreateProduct = async () => {
+    const errors = {};
+
+    if (!newProduct.name) errors.name = "Tên sản phẩm không được để trống";
+    if (!newProduct.price || newProduct.price <= 0) errors.price = "Giá không hợp lệ";
+    if (!newProduct.stock || newProduct.stock < 0) errors.stock = "Tồn kho không hợp lệ";
+    if (!newProduct.category) errors.category = "Danh mục không được để trống";
+    if (!imageFile) errors.image = "Vui lòng chọn ảnh";
+
+    if (Object.keys(errors).length) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    setCreating(true);
+    setFieldErrors({});
+    setCreateError(null);
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const formData = new FormData();
+      formData.append("name", newProduct.name);
+      formData.append("price", newProduct.price);
+      formData.append("stock", newProduct.stock);
+      formData.append("category", newProduct.category);
+      formData.append("image", imageFile); // 👈 QUAN TRỌNG
+
+      const res = await fetch("http://localhost:8080/api/admin/products", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Tạo sản phẩm thất bại");
+
+      const created = await res.json();
+
+      setProducts(prev => [created, ...prev]);
+      setFilteredProducts(prev => [created, ...prev]);
+      setSelectedProduct(created);
+
+      setShowCreateModal(false);
+      setNewProduct({ name: "", price: "", stock: "", category: "" });
+      setImageFile(null);
+
+    } catch (err) {
+      setCreateError(err.message);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+
+
 
   /* ================= FETCH ================= */
   useEffect(() => {
@@ -54,14 +128,17 @@ export default function AdminProductsPage() {
   }, [search, products]);
 
   const getProductImage = (p) => {
-    if (!p.thumbnail) {
+    const image = p.imageUrl || p.thumbnail;
+
+    if (!image) {
       return "https://placehold.co/300x300?text=No+Image";
     }
-  
-    return p.thumbnail.startsWith("http")
-      ? p.thumbnail
-      : `http://localhost:8080${p.thumbnail}`;
+
+    return image.startsWith("http")
+      ? image
+      : `http://localhost:8080${image}`;
   };
+
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -85,10 +162,14 @@ export default function AdminProductsPage() {
 
             <div className="flex-1" />
 
-            <button className="flex items-center gap-2 bg-green-700 text-white font-bold p-3 rounded-lg shadow hover:bg-green-900">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 bg-green-700 text-white font-bold p-3 rounded-lg shadow hover:bg-green-900"
+            >
               <IoIosAddCircleOutline size={22} />
               Thêm sản phẩm
             </button>
+
           </div>
 
           <div className="flex justify-between">
@@ -114,8 +195,8 @@ export default function AdminProductsPage() {
                         onClick={() => setSelectedProduct(p)}
                         className={`border-t cursor-pointer
                         ${selectedProduct?.productId === p.productId
-                          ? "bg-green-600 text-white"
-                          : "hover:bg-gray-50"}
+                            ? "bg-green-600 text-white"
+                            : "hover:bg-gray-50"}
                         `}
                       >
                         <td className="p-4 flex items-center gap-3">
@@ -182,6 +263,165 @@ export default function AdminProductsPage() {
             )}
           </div>
         </div>
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl w-[420px] p-6 shadow-lg">
+              <h2 className="text-xl font-bold mb-4">Tạo sản phẩm</h2>
+
+              {createError && (
+                <div className="bg-red-100 text-red-700 p-3 rounded mb-4 flex gap-3 items-center">
+                  <MdErrorOutline /> {createError}
+                </div>
+              )}
+
+              <div className="space-y-3">
+
+                {/* TÊN */}
+                <div className="mb-6">
+                  <div className="relative">
+                    <input
+                      placeholder="Tên sản phẩm"
+                      className={`w-full px-5 py-3 bg-gray-200 rounded-lg
+                ${fieldErrors.name ? "border border-red-500" : ""}
+              `}
+                      value={newProduct.name}
+                      onChange={e =>
+                        setNewProduct({ ...newProduct, name: e.target.value })
+                      }
+                    />
+                    <FaBoxOpen className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                  </div>
+
+                  {fieldErrors.name && (
+                    <p className="text-red-600 text-sm mt-1">{fieldErrors.name}</p>
+                  )}
+                </div>
+
+                {/* GIÁ */}
+                <div className="mb-6">
+                  <div className="relative">
+                    <input
+                      type="number"
+                      placeholder="Giá"
+                      className={`w-full px-5 py-3 bg-gray-200 rounded-lg
+                ${fieldErrors.price ? "border border-red-500" : ""}
+              `}
+                      value={newProduct.price}
+                      onChange={e =>
+                        setNewProduct({ ...newProduct, price: e.target.value })
+                      }
+                    />
+                    <FaTags className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                  </div>
+
+                  {fieldErrors.price && (
+                    <p className="text-red-600 text-sm mt-1">{fieldErrors.price}</p>
+                  )}
+                </div>
+
+                {/* TỒN KHO */}
+                <div className="mb-6">
+                  <div className="relative">
+                    <input
+                      type="number"
+                      placeholder="Tồn kho"
+                      className={`w-full px-5 py-3 bg-gray-200 rounded-lg
+                ${fieldErrors.stock ? "border border-red-500" : ""}
+              `}
+                      value={newProduct.stock}
+                      onChange={e =>
+                        setNewProduct({ ...newProduct, stock: e.target.value })
+                      }
+                    />
+                    <FaWarehouse className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                  </div>
+
+                  {fieldErrors.stock && (
+                    <p className="text-red-600 text-sm mt-1">{fieldErrors.stock}</p>
+                  )}
+                </div>
+
+                {/* DANH MỤC */}
+                <div className="mb-6">
+                  <div className="relative">
+                    <input
+                      placeholder="Danh mục"
+                      className={`w-full px-5 py-3 bg-gray-200 rounded-lg
+                ${fieldErrors.category ? "border border-red-500" : ""}
+              `}
+                      value={newProduct.category}
+                      onChange={e =>
+                        setNewProduct({ ...newProduct, category: e.target.value })
+                      }
+                    />
+                    <FaBoxOpen className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                  </div>
+
+                  {fieldErrors.category && (
+                    <p className="text-red-600 text-sm mt-1">{fieldErrors.category}</p>
+                  )}
+                </div>
+
+                {/* ẢNH */}
+                <div className="mb-4">
+                  <label className="block mb-2 font-semibold">Ảnh sản phẩm</label>
+
+                  <div className="flex items-center gap-4">
+                    {/* NÚT CHỌN ẢNH */}
+                    <label className="cursor-pointer px-4 py-2 bg-green-700 text-white rounded-lg shadow hover:bg-green-900 transition">
+                      Chọn ảnh
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => setImageFile(e.target.files[0])}
+                      />
+                    </label>
+
+                    {/* TÊN FILE */}
+                    {imageFile && (
+                      <span className="text-sm text-gray-600 truncate max-w-[180px]">
+                        {imageFile.name}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* PREVIEW */}
+                  {imageFile && (
+                    <div className="mt-4">
+                      <img
+                        src={URL.createObjectURL(imageFile)}
+                        alt="Preview"
+                        className="w-28 h-28 rounded-lg object-cove"
+                      />
+                    </div>
+                  )}
+                </div>
+
+
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 border rounded hover:bg-gray-100"
+                >
+                  Hủy
+                </button>
+
+                <button
+                  disabled={creating}
+                  onClick={handleCreateProduct}
+                  className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-900 disabled:opacity-60"
+                >
+                  {creating ? "Đang tạo..." : "Tạo"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );

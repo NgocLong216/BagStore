@@ -23,6 +23,20 @@ export default function ProductPage({ user }) {
   const { cartCount, setCartCount } = useCart();
   const [showToast, setShowToast] = useState(false);
 
+  const getProductImage = (p) => {
+    if (!p.imageUrl) {
+      return "https://placehold.co/300x300?text=No+Image";
+    }
+  
+    // URL đầy đủ (cloud, http...)
+    if (p.imageUrl.startsWith("http")) {
+      return p.imageUrl;
+    }
+  
+    // Ảnh upload từ backend
+    return `http://localhost:8080${p.imageUrl}`;
+  };
+
   // Đồng bộ search box với keyword trên URL
   useEffect(() => {
     setSearchText(keyword);
@@ -158,7 +172,7 @@ export default function ProductPage({ user }) {
               <a href={`/product/${p.productId}`}>
                 <div className="flex justify-center items-center min-h-[250px]">
                   <img
-                    src={p.imageUrl}
+                    src={getProductImage(p)}
                     alt={p.name}
                     className="h-[230px] rounded-xl transition-transform duration-300 hover:scale-110"
                   />

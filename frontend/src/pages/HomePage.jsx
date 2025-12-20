@@ -8,6 +8,19 @@ export default function HomePage({ user }) {
   const { cartCount, setCartCount } = useCart();
   const [showToast, setShowToast] = useState(false);
 
+  const getProductImage = (p) => {
+    if (!p.imageUrl) {
+      return "https://placehold.co/300x300?text=No+Image";
+    }
+  
+    // URL đầy đủ (cloud, http...)
+    if (p.imageUrl.startsWith("http")) {
+      return p.imageUrl;
+    }
+  
+    // Ảnh upload từ backend
+    return `http://localhost:8080${p.imageUrl}`;
+  };
 
   useEffect(() => {
     fetch("http://localhost:8080/api/products/top4")
@@ -191,7 +204,7 @@ export default function HomePage({ user }) {
               <a href={`/product/${p.productId}`}>
                 <div className="flex justify-center items-center min-h-[250px]">
                   <img
-                    src={p.imageUrl}
+                    src={getProductImage(p)}
                     alt={p.name}
                     className="h-[230px] rounded-xl transition-transform duration-300 hover:scale-110"
                   />
@@ -250,7 +263,7 @@ export default function HomePage({ user }) {
               <a href={`/product/${p.productId}`}>
                 <div className="flex justify-center items-center min-h-[250px]">
                   <img
-                    src={p.imageUrl}
+                    src={getProductImage(p)}
                     alt={p.name}
                     className="h-[230px] rounded-xl transition-transform duration-300 hover:scale-110"
                   />

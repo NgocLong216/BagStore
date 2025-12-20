@@ -34,7 +34,8 @@ public class SecurityConfig {
             "/v3/api-docs/swagger-config",
             "/avatars/**",
             "/static/**",
-            "/api/auth/google"
+            "/api/auth/google",
+            "/uploads/**"
     };
 
     @Bean

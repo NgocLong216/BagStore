@@ -1,13 +1,13 @@
 package com.example.BagStore.controller.admin;
 
 import com.example.BagStore.config.JwtUtil;
-import com.example.BagStore.dto.CreateUserRequest;
-import com.example.BagStore.dto.ProductResponseDTO;
-import com.example.BagStore.dto.UpdateUserRequest;
-import com.example.BagStore.dto.UserResponse;
+import com.example.BagStore.dto.*;
 import com.example.BagStore.entity.Product;
+import com.example.BagStore.entity.ProductImage;
 import com.example.BagStore.entity.User;
+import com.example.BagStore.repository.ProductImageRepository;
 import com.example.BagStore.security.CustomUserDetails;
+import com.example.BagStore.service.FileStorageService;
 import com.example.BagStore.service.ProductService;
 import com.example.BagStore.service.UserService;
 import io.jsonwebtoken.Jwt;
@@ -15,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -22,8 +23,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +41,11 @@ public class AdminController {
 
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private FileStorageService fileStorageService;
+
+    @Autowired
 
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -105,5 +113,24 @@ public class AdminController {
     public List<ProductResponseDTO> getAll() {
         return productService.getAll();
     }
+
+    @PostMapping(
+            value = "/products",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<ProductDTO> createProduct(
+            @ModelAttribute ProductRequestDTO request,
+            @RequestParam(value = "image", required = false) MultipartFile image
+    ) {
+        // upload ảnh
+        if (image != null && !image.isEmpty()) {
+            String imageUrl = fileStorageService.storeFile(image);
+            request.setImageUrl(imageUrl);
+        }
+
+        ProductDTO productDTO = productService.createProduct(request);
+        return ResponseEntity.ok(productDTO);
+    }
+
 
 }

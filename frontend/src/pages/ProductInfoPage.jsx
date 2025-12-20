@@ -32,7 +32,16 @@ export default function ProductInfoPage({ user }) {
     const [images, setImages] = useState([]);
     const [activeImage, setActiveImage] = useState("");
 
-
+    const resolveImageUrl = (url) => {
+        if (!url) return "/images/default.jpg";
+      
+        // URL đầy đủ
+        if (url.startsWith("http")) return url;
+      
+        // Ảnh upload từ backend
+        return `http://localhost:8080${url}`;
+      };
+      
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -258,7 +267,7 @@ export default function ProductInfoPage({ user }) {
                 <div className="flex-1 flex justify-center ml-36 mr-20">
                     <div className="flex flex-col items-center">
                         <img
-                            src={activeImage || "/images/default.jpg"}
+                            src={resolveImageUrl(activeImage)}
                             alt={product.name}
                             className="max-w-full max-h-[600px] rounded-lg shadow-lg object-contain mb-4"
                         />
@@ -268,7 +277,7 @@ export default function ProductInfoPage({ user }) {
                                 {images.map((img) => (
                                     <img
                                         key={img.imageId}
-                                        src={img.imageUrl}
+                                        src={resolveImageUrl(img.imageUrl)}
                                         onClick={() => setActiveImage(img.imageUrl)}
                                         className={`w-20 h-20 object-cover rounded cursor-pointer border
                         ${activeImage === img.imageUrl
@@ -507,7 +516,7 @@ export default function ProductInfoPage({ user }) {
                             <a href={`/product/${rec.productId}`}>
                                 <div className="flex justify-center items-center min-h-[250px]">
                                     <img
-                                        src={rec.imageUrl || "/images/default.jpg"}
+                                        src={resolveImageUrl(rec.imageUrl)}
                                         alt={rec.name}
                                         className="h-[230px] rounded-xl transition-transform duration-300 hover:scale-110"
                                     />
