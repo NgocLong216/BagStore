@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { FaSearch, FaEdit, FaTrash, FaBell, FaUser, FaEnvelope, FaLock, FaPhone, FaUnlock } from "react-icons/fa";
+import { MdErrorOutline } from "react-icons/md";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import AdminSidebar from "../../components/AdminSidebar";
 import AdminHeader from "../../components/AdminHeader";
@@ -19,6 +20,14 @@ export default function AdminUsersPage() {
   const [createError, setCreateError] = useState("");
 
   const [confirmAction, setConfirmAction] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  // Edit user state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editErrors, setEditErrors] = useState({});
+  const [editUser, setEditUser] = useState(null);
+
 
   const [newUser, setNewUser] = useState({
     username: "",
@@ -30,6 +39,7 @@ export default function AdminUsersPage() {
 
   const handleCreateUser = async () => {
     setCreateError("");
+    setFieldErrors({});
     setCreating(true);
 
     try {
@@ -45,18 +55,18 @@ export default function AdminUsersPage() {
       });
 
       if (!res.ok) {
-        const err = await res.text();
-        throw new Error(err || "Tạo user thất bại");
+        const data = await res.json(); // Map<String, String>
+        setCreateError(data.message || "Dữ liệu không hợp lệ");
+        setFieldErrors(data.errors || {});
+        return;
       }
 
       const createdUser = await res.json();
 
-      // update table
       setUsers(prev => [createdUser, ...prev]);
       setFilteredUsers(prev => [createdUser, ...prev]);
       setSelectedUser(createdUser);
 
-      // reset
       setShowCreateModal(false);
       setNewUser({
         username: "",
@@ -65,13 +75,11 @@ export default function AdminUsersPage() {
         password: "",
         role: "USER",
       });
-
-    } catch (e) {
-      setCreateError(e.message);
     } finally {
       setCreating(false);
     }
   };
+
 
   const handleLockUser = async (userId) => {
     const token = localStorage.getItem("token");
@@ -110,6 +118,56 @@ export default function AdminUsersPage() {
     setSelectedUser(prev => ({ ...prev, active: true }));
   };
 
+  const handleUpdateUser = async () => {
+    setEditing(true);
+    setEditErrors({});
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(
+        `http://localhost:8080/api/admin/users/${editUser.userId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(editUser),
+        }
+      );
+
+      if (!res.ok) {
+        const data = await res.json();
+        setEditErrors(data.errors || {});
+        return;
+      }
+
+      const updated = await res.json();
+
+      // update list
+      setUsers(prev =>
+        prev.map(u => u.userId === updated.userId ? updated : u)
+      );
+      setFilteredUsers(prev =>
+        prev.map(u => u.userId === updated.userId ? updated : u)
+      );
+      setSelectedUser(updated);
+      setShowEditModal(false);
+
+    } finally {
+      setEditing(false);
+    }
+  };
+
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      setAdmin(payload); // payload.userId
+    }
+  }, []);
 
 
   useEffect(() => {
@@ -256,18 +314,40 @@ export default function AdminUsersPage() {
 
 
                   <div className="flex gap-4">
-                    <button className="p-3 bg-white text-green-700 rounded-lg hover:bg-gray-200"
-                    title="Sửa tài khoản">
+                    <button
+                      onClick={() => {
+                        setEditUser({
+                          userId: selectedUser.userId,
+                          username: selectedUser.username,
+                          email: selectedUser.email,
+                          phone: selectedUser.phone || "",
+                          role: selectedUser.role,
+                        });
+                        setEditErrors({});
+                        setShowEditModal(true);
+                      }}
+                      className="p-3 bg-white text-green-700 rounded-lg hover:bg-gray-200"
+                      title="Sửa tài khoản"
+                    >
                       <FaEdit />
                     </button>
 
+
                     {selectedUser.active ? (
                       <button
+                        disabled={admin?.userId === selectedUser.userId}
                         onClick={() =>
                           setConfirmAction({ type: "lock", user: selectedUser })
                         }
-                        className="p-3 bg-white rounded-lg hover:bg-red-200 text-red-700"
-                        title="Khóa tài khoản"
+                        className={`p-3 rounded-lg ${admin?.userId === selectedUser.userId
+                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                          : "bg-white text-red-700 hover:bg-red-200"
+                          }`}
+                        title={
+                          admin?.userId === selectedUser.userId
+                            ? "Không thể khóa chính bạn"
+                            : "Khóa tài khoản"
+                        }
                       >
                         <FaLock />
                       </button>
@@ -284,6 +364,7 @@ export default function AdminUsersPage() {
                     )}
 
 
+
                   </div>
                 </div>
               </aside>
@@ -296,57 +377,103 @@ export default function AdminUsersPage() {
               <h2 className="text-xl font-bold mb-4">Tạo người dùng</h2>
 
               {createError && (
-                <p className="text-red-600 mb-3">{createError}</p>
+                <div className="bg-red-100 text-red-700 p-3 rounded mb-4 flex gap-3 items-center">
+                  <MdErrorOutline /> {createError}
+                </div>
               )}
 
+
               <div className="space-y-3">
-                <div className="relative mb-6">
-                  <input
-                    placeholder="Tên đăng nhập"
-                    className="w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
-                    value={newUser.username}
-                    onChange={e =>
-                      setNewUser({ ...newUser, username: e.target.value })
-                    }
-                  />
-                  <FaUser className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                <div className="mb-6">
+                  <div className="relative">
+                    <input
+                      placeholder="Tên đăng nhập"
+                      className={`w-full px-5 py-3 bg-gray-200 rounded-lg
+                      ${fieldErrors.username ? "border border-red-500" : ""}
+                    `}
+                      value={newUser.username}
+                      onChange={e =>
+                        setNewUser({ ...newUser, username: e.target.value })
+                      }
+                    />
+
+                    <FaUser className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                  </div>
+
+                  {fieldErrors.username && (
+                    <p className="text-red-600 text-sm mt-1">
+                      {fieldErrors.username}
+                    </p>
+                  )}
                 </div>
 
-                <div className="relative mb-6">
-                  <input
-                    placeholder="Email"
-                    className="w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
-                    value={newUser.email}
-                    onChange={e =>
-                      setNewUser({ ...newUser, email: e.target.value })
-                    }
-                  />
-                  <FaEnvelope className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                <div className="mb-6">
+                  <div className="relative">
+                    <input
+                      placeholder="Email"
+                      className={`w-full px-5 py-3 bg-gray-200 rounded-lg
+                      ${fieldErrors.email ? "border border-red-500" : ""}
+                    `}
+                      value={newUser.email}
+                      onChange={e =>
+                        setNewUser({ ...newUser, email: e.target.value })
+                      }
+                    />
+
+                    <FaEnvelope className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                  </div>
+
+                  {fieldErrors.email && (
+                    <p className="text-red-600 text-sm mt-1">
+                      {fieldErrors.email}
+                    </p>
+                  )}
                 </div>
 
-                <div className="relative mb-6">
-                  <input
-                    placeholder="Số điện thoại"
-                    className="w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
-                    value={newUser.phone}
-                    onChange={e =>
-                      setNewUser({ ...newUser, phone: e.target.value })
-                    }
-                  />
-                  <FaPhone className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                <div className="mb-6">
+                  <div className="relative">
+                    <input
+                      placeholder="Số điện thoại"
+                      className={`w-full px-5 py-3 bg-gray-200 rounded-lg
+                      ${fieldErrors.phone ? "border border-red-500" : ""}
+                    `}
+                      value={newUser.phone}
+                      onChange={e =>
+                        setNewUser({ ...newUser, phone: e.target.value })
+                      }
+                    />
+
+                    <FaPhone className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                  </div>
+
+                  {fieldErrors.phone && (
+                    <p className="text-red-600 text-sm mt-1">
+                      {fieldErrors.phone}
+                    </p>
+                  )}
                 </div>
 
-                <div className="relative mb-6">
-                  <input
-                    type="password"
-                    placeholder="Mật khẩu"
-                    className="w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
-                    value={newUser.password}
-                    onChange={e =>
-                      setNewUser({ ...newUser, password: e.target.value })
-                    }
-                  />
-                  <FaLock className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                <div className="mb-6">
+                  <div className="relative">
+                    <input
+                      placeholder="Mật khẩu"
+                      className={`w-full px-5 py-3 bg-gray-200 rounded-lg
+                      ${fieldErrors.password ? "border border-red-500" : ""}
+                    `}
+                      value={newUser.password}
+                      onChange={e =>
+                        setNewUser({ ...newUser, password: e.target.value })
+                      }
+                    />
+
+                    <FaUser className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                  </div>
+
+                  {fieldErrors.password && (
+                    <p className="text-red-600 text-sm mt-1">
+                      {fieldErrors.password}
+                    </p>
+                  )}
                 </div>
 
                 <label className="block mb-2 font-semibold text-gray-800">Vai trò</label>
@@ -360,6 +487,9 @@ export default function AdminUsersPage() {
                   <option value="USER">Người dùng</option>
                   <option value="ADMIN">Quản trị viên</option>
                 </select>
+                {fieldErrors.role && (
+                  <p className="text-red-600 text-sm mt-1">{fieldErrors.role}</p>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 mt-6">
@@ -381,6 +511,102 @@ export default function AdminUsersPage() {
             </div>
           </div>
         )}
+
+        {showEditModal && editUser && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl w-[420px] p-6 shadow-lg">
+              <h2 className="text-xl font-bold mb-4">Cập nhật người dùng</h2>
+
+              <div className="space-y-4">
+
+                {/* Username */}
+                <div>
+                  <div className="relative">
+                    <input
+                      className="w-full px-5 py-3 bg-gray-200 rounded-lg"
+                      value={editUser.username}
+                      placeholder="Tên đăng nhập"
+                      onChange={e =>
+                        setEditUser({ ...editUser, username: e.target.value })
+                      }
+                    />
+                    <FaUser className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                  </div>
+                  {editErrors.username && (
+                    <p className="text-red-600 text-sm mt-1">{editErrors.username}</p>
+                  )}
+                </div>
+
+                {/* Email */}
+                <div>
+                  <div className="relative">
+                    <input
+                      className="w-full px-5 py-3 bg-gray-200 rounded-lg"
+                      value={editUser.email}
+                      placeholder="Email"
+                      onChange={e =>
+                        setEditUser({ ...editUser, email: e.target.value })
+                      }
+                    />
+                    <FaEnvelope className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                  </div>
+                  {editErrors.email && (
+                    <p className="text-red-600 text-sm mt-1">{editErrors.email}</p>
+                  )}
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <div className="relative">
+                    <input
+                      className="w-full px-5 py-3 bg-gray-200 rounded-lg"
+                      value={editUser.phone}
+                      placeholder="Số điện thoại"
+                      onChange={e =>
+                        setEditUser({ ...editUser, phone: e.target.value })
+                      }
+                    />
+                    <FaPhone className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                  </div>
+                  {editErrors.phone && (
+                    <p className="text-red-600 text-sm mt-1">{editErrors.phone}</p>
+                  )}
+                </div>
+
+                <label className="block mb-2 font-semibold text-gray-800">Vai trò</label>
+                {/* Role */}
+                <select
+                  className="w-full px-5 py-3 bg-gray-200 rounded-lg"
+                  value={editUser.role}
+                  onChange={e =>
+                    setEditUser({ ...editUser, role: e.target.value })
+                  }
+                >
+                  <option value="USER">Người dùng</option>
+                  <option value="ADMIN">Quản trị viên</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 border rounded"
+                >
+                  Hủy
+                </button>
+
+                <button
+                  disabled={editing}
+                  onClick={handleUpdateUser}
+                  className="px-4 py-2 bg-green-700 text-white rounded disabled:opacity-60 hover:bg-green-900"
+                >
+                  {editing ? "Đang lưu..." : "Lưu"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {confirmAction && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl w-[380px] p-6 shadow-lg text-center">
@@ -413,8 +639,8 @@ export default function AdminUsersPage() {
                     setConfirmAction(null);
                   }}
                   className={`px-4 py-2 rounded text-white ${confirmAction.type === "lock"
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "bg-green-600 hover:bg-green-700"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-green-600 hover:bg-green-700"
                     }`}
                 >
                   Xác nhận

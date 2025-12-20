@@ -1,6 +1,7 @@
 package com.example.BagStore.service;
 
 import com.example.BagStore.dto.CreateUserRequest;
+import com.example.BagStore.dto.UpdateUserRequest;
 import com.example.BagStore.dto.UserResponse;
 import com.example.BagStore.dto.UserUpdateRequest;
 import com.example.BagStore.entity.User;
@@ -134,7 +135,7 @@ public class UserService {
         }
 
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username đã tồn tại");
+            throw new RuntimeException("Tên đăng nhập đã tồn tại");
         }
 
         User user = new User();
@@ -166,6 +167,41 @@ public class UserService {
         user.setActive(true);
         userRepository.save(user);
     }
+
+    public User updateUser(Integer adminId, Integer userId, UpdateUserRequest req) {
+
+        User admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new RuntimeException("Admin không tồn tại"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+
+        // ❌ Không cho admin tự hạ role
+        if (admin.getUserId().equals(userId)
+                && !admin.getRole().equals(req.getRole())) {
+            throw new RuntimeException("Không thể thay đổi vai trò của chính bạn");
+        }
+
+        // ❌ Check trùng username
+        if (!user.getUsername().equals(req.getUsername())
+                && userRepository.existsByUsername(req.getUsername())) {
+            throw new RuntimeException("Username đã tồn tại");
+        }
+
+        // ❌ Check trùng email
+        if (!user.getEmail().equals(req.getEmail())
+                && userRepository.existsByEmail(req.getEmail())) {
+            throw new RuntimeException("Email đã tồn tại");
+        }
+
+        user.setUsername(req.getUsername());
+        user.setEmail(req.getEmail());
+        user.setPhone(req.getPhone());
+        user.setRole(req.getRole());
+
+        return userRepository.save(user);
+    }
+
 
 }
 
