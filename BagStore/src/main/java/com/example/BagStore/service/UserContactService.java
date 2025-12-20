@@ -18,12 +18,30 @@ public class UserContactService {
         return userContactRepository.findByUser_UserId(userId);
     }
 
-    public UserContact saveContact(UserContact contact) {
+    @Transactional
+    public UserContact saveContact(Integer userId, UserContact contact) {
+
+        List<UserContact> contacts =
+                userContactRepository.findByUser_UserId(userId);
+
+        // Nếu user chọn default
         if (Boolean.TRUE.equals(contact.getIsDefault())) {
-            userContactRepository.unsetDefaultByUserId(contact.getUser().getUserId());
+
+            for (UserContact c : contacts) {
+                c.setIsDefault(false);
+            }
+
+            userContactRepository.saveAll(contacts);
         }
+        // Nếu là địa chỉ đầu tiên
+        else if (contacts.isEmpty()) {
+            contact.setIsDefault(true);
+        }
+
         return userContactRepository.save(contact);
     }
+
+
 
 
     public void deleteContact(Integer id) {
@@ -32,9 +50,17 @@ public class UserContactService {
 
     @Transactional
     public void setDefaultContact(Integer userId, Integer contactId) {
-        userContactRepository.unsetDefaultByUserId(userId);
-        userContactRepository.setDefaultByContactId(userId, contactId);
+
+        List<UserContact> contacts =
+                userContactRepository.findByUser_UserId(userId);
+
+        for (UserContact c : contacts) {
+            c.setIsDefault(c.getContactId().equals(contactId));
+        }
+
+        userContactRepository.saveAll(contacts);
     }
+
 }
 
 

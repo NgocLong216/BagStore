@@ -27,17 +27,36 @@ public class UserContactController {
     }
 
     @PostMapping
-    public UserContact createContact(Authentication authentication, @RequestBody UserContact contact) {
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+    public UserContact createContact(Authentication authentication,
+                                     @RequestBody UserContact contact) {
+
+        CustomUserDetails userDetails =
+                (CustomUserDetails) authentication.getPrincipal();
+
+        Integer userId = userDetails.getUser().getUserId();
+
         contact.setUser(userDetails.getUser());
-        return userContactService.saveContact(contact);
+
+        return userContactService.saveContact(userId, contact);
     }
 
+
     @PutMapping("/{id}")
-    public UserContact updateContact(@PathVariable Integer id, @RequestBody UserContact contact) {
+    public UserContact updateContact(Authentication authentication,
+                                     @PathVariable Integer id,
+                                     @RequestBody UserContact contact) {
+
+        CustomUserDetails userDetails =
+                (CustomUserDetails) authentication.getPrincipal();
+
+        Integer userId = userDetails.getUser().getUserId();
+
         contact.setContactId(id);
-        return userContactService.saveContact(contact);
+        contact.setUser(userDetails.getUser());
+
+        return userContactService.saveContact(userId, contact);
     }
+
 
     @DeleteMapping("/{id}")
     public void deleteContact(@PathVariable Integer id) {

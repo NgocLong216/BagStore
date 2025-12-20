@@ -19,22 +19,6 @@ public interface UserContactRepository extends JpaRepository<UserContact, Intege
 
     boolean existsByUser_UserId(Integer userId);
 
-    // Bỏ mặc định toàn bộ địa chỉ của user
-    @Modifying
-    @Transactional
-    @Query("UPDATE UserContact c SET c.isDefault = false WHERE c.user.userId = :userId")
-    void unsetDefaultByUserId(Integer userId);
-
-    // Set mặc định cho 1 địa chỉ cụ thể
-    @Modifying
-    @Transactional
-    @Query("""
-        UPDATE UserContact c 
-        SET c.isDefault = true 
-        WHERE c.contactId = :contactId 
-          AND c.user.userId = :userId
-    """)
-    void setDefaultByContactId(Integer userId, Integer contactId);
 }
 
 
