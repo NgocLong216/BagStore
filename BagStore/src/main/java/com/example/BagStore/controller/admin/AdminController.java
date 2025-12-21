@@ -126,10 +126,26 @@ public class AdminController {
         return ResponseEntity.ok(productDTO);
     }
 
-    @DeleteMapping("products/{id}")
+    @DeleteMapping("/products/{id}")
     public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.ok().build();
     }
+
+    @PutMapping(
+            value = "/products/{id}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<?> updateProduct(
+            @PathVariable Long id,
+            @ModelAttribute ProductRequestDTO request,
+            @RequestParam(value = "images", required = false) List<MultipartFile> images
+    ) {
+        return ResponseEntity.ok(
+                productService.updateProduct(id, request, images)
+        );
+    }
+
+
 
 }

@@ -72,6 +72,8 @@ public class ProductService {
         return ProductResponseDTO.builder()
                 .productId(p.getProductId())
                 .name(p.getName())
+                .description(p.getDescription())
+                .detail(p.getDetail())
                 .price(p.getPrice())
                 .stock(p.getStock())
                 .category(p.getCategory())
@@ -97,6 +99,9 @@ public class ProductService {
         product.setPrice(request.getPrice());
         product.setStock(request.getStock());
         product.setCategory(request.getCategory());
+        product.setDescription(request.getDescription());
+        product.setDetail(request.getDetail());
+        product.setCreatedAt(LocalDateTime.now());
 
         productRepository.save(product);
 
@@ -117,9 +122,6 @@ public class ProductService {
             }
         }
 
-        // chỉ cần save product
-        productRepository.save(product);
-
         return new ProductDTO(
                 product.getProductId(),
                 product.getName(),
@@ -138,18 +140,50 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
     }
 
-    public Product update(Long id, ProductRequestDTO dto) {
-        Product p = getById(id);
+    @Transactional
+    public ProductDTO updateProduct(
+            Long productId,
+            ProductRequestDTO request,
+            List<MultipartFile> newImages
+    ) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
 
-        p.setName(dto.getName());
-        p.setDescription(dto.getDescription());
-        p.setDetail(dto.getDetail());
-        p.setPrice(dto.getPrice());
-        p.setStock(dto.getStock());
-        p.setCategory(dto.getCategory());
+        // ===== UPDATE FIELD =====
+        product.setName(request.getName());
+        product.setPrice(request.getPrice());
+        product.setStock(request.getStock());
+        product.setCategory(request.getCategory());
+        product.setDescription(request.getDescription());
+        product.setDetail(request.getDetail());
 
-        return productRepository.save(p);
+        // ===== ADD NEW IMAGES =====
+        if (newImages != null && !newImages.isEmpty()) {
+            for (MultipartFile file : newImages) {
+                if (file.isEmpty()) continue;
+
+                String imageUrl = fileStorageService.storeFile(file);
+
+                ProductImage img = new ProductImage();
+                img.setImageUrl(imageUrl);
+                img.setProduct(product);
+                img.setThumbnail(false);
+
+                product.getImages().add(img);
+            }
+        }
+
+        return new ProductDTO(
+                product.getProductId(),
+                product.getName(),
+                product.getPrice(),
+                product.getImages().isEmpty()
+                        ? null
+                        : product.getImages().get(0).getImageUrl(),
+                product.getStock()
+        );
     }
+
 
     public void delete(Long id) {
         productRepository.deleteById(id);
@@ -249,10 +283,10 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
 
-        // 1️⃣ XÓA CART TRƯỚC (KHÔNG QUERY)
+        // 1️ XÓA CART TRƯỚC (KHÔNG QUERY)
         cartRepository.deleteByProduct_ProductId(productId);
 
-        // 2️⃣ XÓA FILE ẢNH
+        // 2️ XÓA FILE ẢNH
         product.getImages().forEach(img -> {
             try {
                 Path path = Paths.get("uploads",
@@ -263,7 +297,7 @@ public class ProductService {
             }
         });
 
-        // 3️⃣ XÓA PRODUCT (cascade image + spec)
+        // 3️ XÓA PRODUCT (cascade image + spec)
         productRepository.delete(product);
     }
 

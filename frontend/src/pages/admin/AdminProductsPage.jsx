@@ -11,6 +11,7 @@ import { MdErrorOutline } from "react-icons/md";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import AdminSidebar from "../../components/AdminSidebar";
 import AdminHeader from "../../components/AdminHeader";
+import ProductModal from "../../components/ProductModal";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState([]);
@@ -21,85 +22,72 @@ export default function AdminProductsPage() {
   const [error, setError] = useState(null);
 
   // add
-  const [showCreateModal, setShowCreateModal] = useState(false);
+
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState(null);
-  const [fieldErrors, setFieldErrors] = useState({});
-  const [newProduct, setNewProduct] = useState({
-    name: "",
-    price: "",
-    stock: "",
-    category: "",
-  });
 
-  const [imageFiles, setImageFiles] = useState([]);
+  // modal chung
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState("create"); // create | edit
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  //  delete
+  // delete
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
 
-
-  const handleCreateProduct = async () => {
-    const errors = {};
-
-    if (!newProduct.name) errors.name = "Tên sản phẩm không được để trống";
-    if (!newProduct.price || newProduct.price <= 0) errors.price = "Giá không hợp lệ";
-    if (!newProduct.stock || newProduct.stock < 0) errors.stock = "Tồn kho không hợp lệ";
-    if (!newProduct.category) errors.category = "Danh mục không được để trống";
-    if (imageFiles.length === 0) errors.image = "Vui lòng chọn ảnh";
-
-    if (Object.keys(errors).length) {
-      setFieldErrors(errors);
-      return;
-    }
-
-    try {
-      setCreating(true);
-
-      const formData = new FormData();
-
-      imageFiles.forEach(file => {
-        formData.append("images", file);
-      });
-
-      formData.append("name", newProduct.name);
-      formData.append("price", newProduct.price);
-      formData.append("stock", newProduct.stock);
-      formData.append("category", newProduct.category);
-
-      const res = await fetch("http://localhost:8080/api/admin/products", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: formData,
-      });
-
-      if (!res.ok) throw new Error("Tạo sản phẩm thất bại");
-
-      const created = await res.json();
-
-      setProducts(prev => [created, ...prev]);
-      setFilteredProducts(prev => [created, ...prev]);
-      setSelectedProduct(created);
-
-      setShowCreateModal(false);
-      setNewProduct({ name: "", price: "", stock: "", category: "" });
-      setImageFiles([]);
-
-    } catch (err) {
-      setCreateError(err.message);
-    } finally {
-      setCreating(false);
-    }
+  const openCreateModal = () => {
+    setModalMode("create");
+    setEditingProduct(null);
+    setShowModal(true);
   };
+
+
+  const openEditModal = (product) => {
+    setModalMode("edit");
+    setEditingProduct(product);
+    setShowModal(true);
+  };
+
+
+  const handleSubmitProduct = async (data, imageFiles) => {
+    const formData = new FormData();
+  
+    imageFiles.forEach(file => {
+      formData.append("images", file);
+    });
+  
+    Object.keys(data).forEach(key => {
+      formData.append(key, data[key]);
+    });
+  
+    const url =
+      modalMode === "create"
+        ? "http://localhost:8080/api/admin/products"
+        : `http://localhost:8080/api/admin/products/${editingProduct.productId}`;
+  
+    const method = modalMode === "create" ? "POST" : "PUT";
+  
+    await fetch(url, {
+      method,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: formData,
+    });
+  
+    fetchProducts();
+    setShowModal(false);
+  };
+  
+
 
   // delete
   const handleDeleteProduct = async () => {
-    if (!selectedProduct) return;
-
     try {
+      setDeleting(true);
+
       const res = await fetch(
         `http://localhost:8080/api/admin/products/${selectedProduct.productId}`,
         {
@@ -110,67 +98,63 @@ export default function AdminProductsPage() {
         }
       );
 
-      if (!res.ok) throw new Error("Xóa sản phẩm thất bại");
+      if (!res.ok) throw new Error("Xóa thất bại");
 
-      setProducts(prev => {
-        const newList = prev.filter(p => p.productId !== selectedProduct.productId);
-      
-        // 👉 TỰ CHỌN PRODUCT KHÁC
-        setSelectedProduct(newList.length > 0 ? newList[0] : null);
-      
-        return newList;
-      });
-      
+      setProducts(prev =>
+        prev.filter(p => p.productId !== selectedProduct.productId)
+      );
+
       setFilteredProducts(prev =>
         prev.filter(p => p.productId !== selectedProduct.productId)
       );
-      
+
+      setSelectedProduct(null);
       setShowDeleteModal(false);
-      
 
     } catch (err) {
-      alert(err.message);
+      setDeleteError(err.message);
+    } finally {
+      setDeleting(false);
     }
   };
 
+
   // scroll lock khi mở modal
   useEffect(() => {
-    if (showDeleteModal || showCreateModal) {
-      // Khoá scroll
-      document.body.style.overflow = "hidden";
-    } else {
-      // Mở lại scroll
-      document.body.style.overflow = "auto";
-    }
+    document.body.style.overflow =
+      showModal || showDeleteModal ? "hidden" : "auto";
 
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [showDeleteModal, showCreateModal]);
+  }, [showModal, showDeleteModal]);
+
+
 
 
   /* ================= FETCH ================= */
+
+  const fetchProducts = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:8080/api/admin/products", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Không thể tải danh sách sản phẩm");
+
+      const data = await res.json();
+      setProducts(data);
+      setFilteredProducts(data);
+      setSelectedProduct(data[0] || null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:8080/api/admin/products", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) throw new Error("Không thể tải danh sách sản phẩm");
-
-        const data = await res.json();
-        setProducts(data);
-        setFilteredProducts(data);
-        setSelectedProduct(data[0] || null);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProducts();
   }, []);
 
@@ -219,7 +203,7 @@ export default function AdminProductsPage() {
             <div className="flex-1" />
 
             <button
-              onClick={() => setShowCreateModal(true)}
+              onClick={openCreateModal}
               className="flex items-center gap-2 bg-green-700 text-white font-bold p-3 rounded-lg shadow hover:bg-green-900"
             >
               <IoIosAddCircleOutline size={22} />
@@ -306,7 +290,9 @@ export default function AdminProductsPage() {
                   </p>
 
                   <div className="flex justify-center gap-4">
-                    <button className="p-3 bg-white text-green-700 rounded-lg hover:bg-gray-200">
+                    <button
+                      onClick={() => openEditModal(selectedProduct)}
+                      className="p-3 bg-white text-green-700 rounded-lg hover:bg-gray-200">
                       <FaEdit />
                     </button>
 
@@ -323,170 +309,18 @@ export default function AdminProductsPage() {
             )}
           </div>
         </div>
-        {showCreateModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl w-[420px] p-6 shadow-lg">
-              <h2 className="text-xl font-bold mb-4">Tạo sản phẩm</h2>
 
-              {createError && (
-                <div className="bg-red-100 text-red-700 p-3 rounded mb-4 flex gap-3 items-center">
-                  <MdErrorOutline /> {createError}
-                </div>
-              )}
-
-              <div className="space-y-3">
-
-                {/* TÊN */}
-                <div className="mb-6">
-                  <div className="relative">
-                    <input
-                      placeholder="Tên sản phẩm"
-                      className={`w-full px-5 py-3 bg-gray-200 rounded-lg
-                ${fieldErrors.name ? "border border-red-500" : ""}
-              `}
-                      value={newProduct.name}
-                      onChange={e =>
-                        setNewProduct({ ...newProduct, name: e.target.value })
-                      }
-                    />
-                    <FaBoxOpen className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
-                  </div>
-
-                  {fieldErrors.name && (
-                    <p className="text-red-600 text-sm mt-1">{fieldErrors.name}</p>
-                  )}
-                </div>
-
-                {/* GIÁ */}
-                <div className="mb-6">
-                  <div className="relative">
-                    <input
-                      type="number"
-                      placeholder="Giá"
-                      className={`w-full px-5 py-3 pr-12 bg-gray-200 rounded-lg
-                      appearance-none
-                      [&::-webkit-inner-spin-button]:appearance-none
-                      [&::-webkit-outer-spin-button]:appearance-none
-                        ${fieldErrors.price ? "border border-red-500" : ""}
-                      `}
-                      value={newProduct.price}
-                      onChange={e =>
-                        setNewProduct({ ...newProduct, price: e.target.value })
-                      }
-                    />
-                    <FaTags className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
-                  </div>
-
-                  {fieldErrors.price && (
-                    <p className="text-red-600 text-sm mt-1">{fieldErrors.price}</p>
-                  )}
-                </div>
-
-                {/* TỒN KHO */}
-                <div className="mb-6">
-                  <div className="relative">
-                    <input
-                      type="number"
-                      placeholder="Tồn kho"
-                      className={`w-full px-5 py-3 pr-12 bg-gray-200 rounded-lg
-                        appearance-none
-                        [&::-webkit-inner-spin-button]:appearance-none
-                        [&::-webkit-outer-spin-button]:appearance-none
-                        ${fieldErrors.stock ? "border border-red-500" : ""}
-                      `}
-                      value={newProduct.stock}
-                      onChange={e =>
-                        setNewProduct({ ...newProduct, stock: e.target.value })
-                      }
-                    />
-
-                    <FaWarehouse className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
-                  </div>
-
-                  {fieldErrors.stock && (
-                    <p className="text-red-600 text-sm mt-1">{fieldErrors.stock}</p>
-                  )}
-                </div>
-
-                {/* DANH MỤC */}
-                <div className="mb-6">
-                  <div className="relative">
-                    <input
-                      placeholder="Danh mục"
-                      className={`w-full px-5 py-3 bg-gray-200 rounded-lg
-                ${fieldErrors.category ? "border border-red-500" : ""}
-              `}
-                      value={newProduct.category}
-                      onChange={e =>
-                        setNewProduct({ ...newProduct, category: e.target.value })
-                      }
-                    />
-                    <FaBoxOpen className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
-                  </div>
-
-                  {fieldErrors.category && (
-                    <p className="text-red-600 text-sm mt-1">{fieldErrors.category}</p>
-                  )}
-                </div>
-
-                {/* ẢNH */}
-                <div className="mb-4">
-                  <label className="block mb-2 font-semibold">Ảnh sản phẩm</label>
-
-                  <div className="flex items-center gap-4">
-                    {/* NÚT CHỌN ẢNH */}
-                    <label className="cursor-pointer px-4 py-2 bg-green-700 text-white rounded-lg shadow hover:bg-green-900 transition">
-                      Chọn ảnh
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => setImageFiles(Array.from(e.target.files))}
-                      />
-
-                    </label>
-
-                  </div>
-
-                  {/* PREVIEW */}
-
-                  {imageFiles.length > 0 && (
-                    <div className="mt-4 grid grid-cols-4 gap-3">
-                      {imageFiles.map((file, idx) => (
-                        <img
-                          key={idx}
-                          src={URL.createObjectURL(file)}
-                          className="w-20 h-20 rounded-lg object-cover"
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                </div>
+        <ProductModal
+          open={showModal}
+          mode={modalMode}
+          initialData={editingProduct}
+          loading={saving}
+          onClose={() => setShowModal(false)}
+          onSubmit={handleSubmitProduct}
+        />
 
 
-              </div>
 
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 border rounded hover:bg-gray-100"
-                >
-                  Hủy
-                </button>
-
-                <button
-                  disabled={creating}
-                  onClick={handleCreateProduct}
-                  className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-900 disabled:opacity-60"
-                >
-                  {creating ? "Đang tạo..." : "Tạo"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
         {showDeleteModal && selectedProduct && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
             onClick={() => setShowDeleteModal(false)}>
