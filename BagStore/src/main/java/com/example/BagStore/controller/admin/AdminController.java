@@ -120,17 +120,16 @@ public class AdminController {
     )
     public ResponseEntity<ProductDTO> createProduct(
             @ModelAttribute ProductRequestDTO request,
-            @RequestParam(value = "image", required = false) MultipartFile image
+            @RequestParam(value = "images", required = false) List<MultipartFile> images
     ) {
-        // upload ảnh
-        if (image != null && !image.isEmpty()) {
-            String imageUrl = fileStorageService.storeFile(image);
-            request.setImageUrl(imageUrl);
-        }
-
-        ProductDTO productDTO = productService.createProduct(request);
+        ProductDTO productDTO = productService.createProduct(request, images);
         return ResponseEntity.ok(productDTO);
     }
 
+    @DeleteMapping("products/{id}")
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.ok().build();
+    }
 
 }

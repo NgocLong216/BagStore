@@ -4,6 +4,7 @@ import com.example.BagStore.dto.*;
 import com.example.BagStore.entity.Product;
 import com.example.BagStore.entity.ProductImage;
 import com.example.BagStore.entity.ProductSpecification;
+import com.example.BagStore.repository.CartRepository;
 import com.example.BagStore.repository.ProductImageRepository;
 import com.example.BagStore.repository.ProductRepository;
 import com.example.BagStore.repository.ProductSpecificationRepository;
@@ -16,7 +17,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +39,12 @@ public class ProductService {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    @Autowired
+    private FileStorageService fileStorageService;
+
+    @Autowired
+    private CartRepository cartRepository;
 
     public List<ProductDTO> getTop4Products() {
         return productRepository.findTop4ByOrderByCreatedAtDesc()
@@ -77,40 +88,50 @@ public class ProductService {
 
 
     @Transactional
-    public ProductDTO createProduct(ProductRequestDTO req) {
+    public ProductDTO createProduct(
+            ProductRequestDTO request,
+            List<MultipartFile> images
+    ) {
+        Product product = new Product();
+        product.setName(request.getName());
+        product.setPrice(request.getPrice());
+        product.setStock(request.getStock());
+        product.setCategory(request.getCategory());
 
-        // 1. Lưu product
-        Product product = Product.builder()
-                .name(req.getName())
-                .description(req.getDescription())
-                .detail(req.getDetail())
-                .price(req.getPrice())
-                .stock(req.getStock())
-                .category(req.getCategory())
-                .createdAt(LocalDateTime.now())
-                .build();
+        productRepository.save(product);
 
-        Product savedProduct = productRepository.save(product);
+        if (images != null && !images.isEmpty()) {
+            for (int i = 0; i < images.size(); i++) {
+                MultipartFile file = images.get(i);
+                if (file.isEmpty()) continue;
 
-        // 2. Lưu ảnh (nếu có)
-        if (req.getImageUrl() != null && !req.getImageUrl().isBlank()) {
-            ProductImage image = ProductImage.builder()
-                    .imageUrl(req.getImageUrl())
-                    .product(savedProduct)
-                    .build();
+                String imageUrl = fileStorageService.storeFile(file);
 
-            productImageRepository.save(image);
+                ProductImage img = new ProductImage();
+                img.setProduct(product);
+                img.setImageUrl(imageUrl);
+                img.setThumbnail(i == 0);
+
+                // 🔥 QUAN TRỌNG
+                product.getImages().add(img);
+            }
         }
 
-        // 3. Trả DTO cho frontend
+        // chỉ cần save product
+        productRepository.save(product);
+
         return new ProductDTO(
-                savedProduct.getProductId(),
-                savedProduct.getName(),
-                savedProduct.getPrice(),
-                req.getImageUrl(),
-                savedProduct.getStock()
+                product.getProductId(),
+                product.getName(),
+                product.getPrice(),
+                product.getImages().isEmpty()
+                        ? null
+                        : product.getImages().get(0).getImageUrl(),
+                product.getStock()
         );
     }
+
+
 
     public Product getById(Long id) {
         return productRepository.findById(id)
@@ -221,6 +242,31 @@ public class ProductService {
                 ))
                 .toList();
     }
+
+    @Transactional
+    public void deleteProduct(Long productId) {
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+
+        // 1️⃣ XÓA CART TRƯỚC (KHÔNG QUERY)
+        cartRepository.deleteByProduct_ProductId(productId);
+
+        // 2️⃣ XÓA FILE ẢNH
+        product.getImages().forEach(img -> {
+            try {
+                Path path = Paths.get("uploads",
+                        img.getImageUrl().replace("/uploads/", ""));
+                Files.deleteIfExists(path);
+            } catch (Exception e) {
+                System.err.println("Không xóa được ảnh: " + img.getImageUrl());
+            }
+        });
+
+        // 3️⃣ XÓA PRODUCT (cascade image + spec)
+        productRepository.delete(product);
+    }
+
 
 }
 

@@ -32,7 +32,12 @@ export default function AdminProductsPage() {
     category: "",
   });
 
-  const [imageFile, setImageFile] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
+
+  //  delete
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
 
 
   const handleCreateProduct = async () => {
@@ -42,31 +47,31 @@ export default function AdminProductsPage() {
     if (!newProduct.price || newProduct.price <= 0) errors.price = "Giá không hợp lệ";
     if (!newProduct.stock || newProduct.stock < 0) errors.stock = "Tồn kho không hợp lệ";
     if (!newProduct.category) errors.category = "Danh mục không được để trống";
-    if (!imageFile) errors.image = "Vui lòng chọn ảnh";
+    if (imageFiles.length === 0) errors.image = "Vui lòng chọn ảnh";
 
     if (Object.keys(errors).length) {
       setFieldErrors(errors);
       return;
     }
 
-    setCreating(true);
-    setFieldErrors({});
-    setCreateError(null);
-
     try {
-      const token = localStorage.getItem("token");
+      setCreating(true);
 
       const formData = new FormData();
+
+      imageFiles.forEach(file => {
+        formData.append("images", file);
+      });
+
       formData.append("name", newProduct.name);
       formData.append("price", newProduct.price);
       formData.append("stock", newProduct.stock);
       formData.append("category", newProduct.category);
-      formData.append("image", imageFile); // 👈 QUAN TRỌNG
 
       const res = await fetch("http://localhost:8080/api/admin/products", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: formData,
       });
@@ -81,7 +86,7 @@ export default function AdminProductsPage() {
 
       setShowCreateModal(false);
       setNewProduct({ name: "", price: "", stock: "", category: "" });
-      setImageFile(null);
+      setImageFiles([]);
 
     } catch (err) {
       setCreateError(err.message);
@@ -90,7 +95,58 @@ export default function AdminProductsPage() {
     }
   };
 
+  // delete
+  const handleDeleteProduct = async () => {
+    if (!selectedProduct) return;
 
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/admin/products/${selectedProduct.productId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Xóa sản phẩm thất bại");
+
+      setProducts(prev => {
+        const newList = prev.filter(p => p.productId !== selectedProduct.productId);
+      
+        // 👉 TỰ CHỌN PRODUCT KHÁC
+        setSelectedProduct(newList.length > 0 ? newList[0] : null);
+      
+        return newList;
+      });
+      
+      setFilteredProducts(prev =>
+        prev.filter(p => p.productId !== selectedProduct.productId)
+      );
+      
+      setShowDeleteModal(false);
+      
+
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // scroll lock khi mở modal
+  useEffect(() => {
+    if (showDeleteModal || showCreateModal) {
+      // Khoá scroll
+      document.body.style.overflow = "hidden";
+    } else {
+      // Mở lại scroll
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [showDeleteModal, showCreateModal]);
 
 
   /* ================= FETCH ================= */
@@ -254,7 +310,11 @@ export default function AdminProductsPage() {
                       <FaEdit />
                     </button>
 
-                    <button className="p-3 bg-white text-red-700 rounded-lg hover:bg-red-200">
+                    <button onClick={() => {
+                      setDeleteError(null);
+                      setShowDeleteModal(true);
+                    }}
+                      className="p-3 bg-white text-red-700 rounded-lg hover:bg-red-200">
                       <FaTrash />
                     </button>
                   </div>
@@ -303,9 +363,12 @@ export default function AdminProductsPage() {
                     <input
                       type="number"
                       placeholder="Giá"
-                      className={`w-full px-5 py-3 bg-gray-200 rounded-lg
-                ${fieldErrors.price ? "border border-red-500" : ""}
-              `}
+                      className={`w-full px-5 py-3 pr-12 bg-gray-200 rounded-lg
+                      appearance-none
+                      [&::-webkit-inner-spin-button]:appearance-none
+                      [&::-webkit-outer-spin-button]:appearance-none
+                        ${fieldErrors.price ? "border border-red-500" : ""}
+                      `}
                       value={newProduct.price}
                       onChange={e =>
                         setNewProduct({ ...newProduct, price: e.target.value })
@@ -325,14 +388,18 @@ export default function AdminProductsPage() {
                     <input
                       type="number"
                       placeholder="Tồn kho"
-                      className={`w-full px-5 py-3 bg-gray-200 rounded-lg
-                ${fieldErrors.stock ? "border border-red-500" : ""}
-              `}
+                      className={`w-full px-5 py-3 pr-12 bg-gray-200 rounded-lg
+                        appearance-none
+                        [&::-webkit-inner-spin-button]:appearance-none
+                        [&::-webkit-outer-spin-button]:appearance-none
+                        ${fieldErrors.stock ? "border border-red-500" : ""}
+                      `}
                       value={newProduct.stock}
                       onChange={e =>
                         setNewProduct({ ...newProduct, stock: e.target.value })
                       }
                     />
+
                     <FaWarehouse className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
                   </div>
 
@@ -375,28 +442,27 @@ export default function AdminProductsPage() {
                         multiple
                         accept="image/*"
                         className="hidden"
-                        onChange={e => setImageFile(e.target.files[0])}
+                        onChange={(e) => setImageFiles(Array.from(e.target.files))}
                       />
+
                     </label>
 
-                    {/* TÊN FILE */}
-                    {imageFile && (
-                      <span className="text-sm text-gray-600 truncate max-w-[180px]">
-                        {imageFile.name}
-                      </span>
-                    )}
                   </div>
 
                   {/* PREVIEW */}
-                  {imageFile && (
-                    <div className="mt-4">
-                      <img
-                        src={URL.createObjectURL(imageFile)}
-                        alt="Preview"
-                        className="w-28 h-28 rounded-lg object-cove"
-                      />
+
+                  {imageFiles.length > 0 && (
+                    <div className="mt-4 grid grid-cols-4 gap-3">
+                      {imageFiles.map((file, idx) => (
+                        <img
+                          key={idx}
+                          src={URL.createObjectURL(file)}
+                          className="w-20 h-20 rounded-lg object-cover"
+                        />
+                      ))}
                     </div>
                   )}
+
                 </div>
 
 
@@ -421,6 +487,48 @@ export default function AdminProductsPage() {
             </div>
           </div>
         )}
+        {showDeleteModal && selectedProduct && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+            onClick={() => setShowDeleteModal(false)}>
+            <div className="bg-white rounded-xl w-[420px] p-6 shadow-lg"
+              onClick={e => e.stopPropagation()}>
+
+              <h2 className="text-xl font-bold mb-2 text-red-700">
+                Xóa sản phẩm
+              </h2>
+
+              <p className="text-gray-700 mb-4">
+                Bạn có chắc muốn xóa sản phẩm:
+                <span className="font-semibold"> {selectedProduct.name}</span>?
+              </p>
+
+              {deleteError && (
+                <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
+                  {deleteError}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  disabled={deleting}
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 border rounded hover:bg-gray-100"
+                >
+                  Hủy
+                </button>
+
+                <button
+                  disabled={deleting}
+                  onClick={handleDeleteProduct}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-60"
+                >
+                  {deleting ? "Đang xóa..." : "Xóa"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
 
       </main>
     </div>

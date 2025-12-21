@@ -25,4 +25,6 @@ public class ProductImage {
     @JsonIgnore
     private Product product;
 
+    private boolean thumbnail;
+
 }
