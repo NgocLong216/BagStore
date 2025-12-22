@@ -8,6 +8,7 @@ import com.example.BagStore.entity.User;
 import com.example.BagStore.repository.ProductImageRepository;
 import com.example.BagStore.security.CustomUserDetails;
 import com.example.BagStore.service.FileStorageService;
+import com.example.BagStore.service.OrderService;
 import com.example.BagStore.service.ProductService;
 import com.example.BagStore.service.UserService;
 import io.jsonwebtoken.Jwt;
@@ -46,6 +47,7 @@ public class AdminController {
     private FileStorageService fileStorageService;
 
     @Autowired
+    private OrderService orderService;
 
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -139,13 +141,27 @@ public class AdminController {
     public ResponseEntity<?> updateProduct(
             @PathVariable Long id,
             @ModelAttribute ProductRequestDTO request,
-            @RequestParam(value = "images", required = false) List<MultipartFile> images
+            @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            @RequestParam(value = "deletedImageIds", required = false) List<Long> deletedImageIds
+
     ) {
         return ResponseEntity.ok(
-                productService.updateProduct(id, request, images)
+                productService.updateProduct(id, request, images, deletedImageIds)
         );
     }
 
+    @GetMapping("/orders")
+    public ResponseEntity<List<OrderAdminResponseDTO>> getAllOrders() {
+        return ResponseEntity.ok(orderService.getAllOrders());
+    }
 
+    @PutMapping("/orders/{id}/status")
+    public ResponseEntity<?> updateOrderStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateOrderStatusRequest request
+    ) {
+        orderService.updateOrderStatus(id, request.status());
+        return ResponseEntity.ok("Cập nhật trạng thái đơn hàng thành công");
+    }
 
 }

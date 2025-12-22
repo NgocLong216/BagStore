@@ -217,6 +217,66 @@ public class OrderService {
         orderRepository.save(order);
     }
 
+    public List<OrderAdminResponseDTO> getAllOrders() {
+
+        List<Order> orders = orderRepository.findAllByOrderByCreatedAtDesc();
+
+        return orders.stream()
+                .map(order -> new OrderAdminResponseDTO(
+                        order.getOrderId(),
+                        order.getUserId(),
+                        order.getFullName(),
+                        order.getPhone(),
+                        order.getTotalPrice(),
+                        order.getStatus(),
+                        order.getCreatedAt()
+                ))
+                .toList();
+    }
+
+    @Transactional
+    public void updateOrderStatus(Long orderId, String newStatus) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        String currentStatus = order.getStatus();
+
+        // Không cho thay đổi nếu đã hoàn tất hoặc đã hủy
+        if ("COMPLETED".equals(currentStatus)) {
+            throw new RuntimeException("Đơn hàng đã hoàn thành, không thể thay đổi");
+        }
+
+        if ("CANCELLED".equals(currentStatus)) {
+            throw new RuntimeException("Đơn hàng đã bị hủy");
+        }
+
+        // Validate status
+        if (!List.of("PENDING", "COMPLETED", "CANCELLED").contains(newStatus)) {
+            throw new RuntimeException("Trạng thái không hợp lệ");
+        }
+
+        // ===== ROLLBACK TỒN KHO KHI HỦY =====
+        if ("PENDING".equals(currentStatus) && "CANCELLED".equals(newStatus)) {
+
+            for (OrderItem item : order.getItems()) {
+
+                Product product = item.getProduct();
+
+                product.setStock(
+                        product.getStock() + item.getQuantity()
+                );
+
+                productRepository.save(product);
+            }
+        }
+
+        order.setStatus(newStatus);
+        orderRepository.save(order);
+    }
+
+
+
 }
 
 

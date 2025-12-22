@@ -6,7 +6,7 @@ import { useCart } from "../contexts/CartContext";
 export default function Header({ user }) {
   const [keyword, setKeyword] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { cartCount } = useCart();
+  const { cartCount, setCartCount } = useCart();
 
   const navigate = useNavigate();
 

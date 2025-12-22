@@ -69,6 +69,14 @@ public class ProductService {
             thumbnail = p.getImages().get(0).getImageUrl();
         }
 
+        List<ProductImageDTO> images = p.getImages()
+                .stream()
+                .map(img -> ProductImageDTO.builder()
+                        .imageId(img.getImageId())
+                        .imageUrl(img.getImageUrl())
+                        .build())
+                .toList();
+
         return ProductResponseDTO.builder()
                 .productId(p.getProductId())
                 .name(p.getName())
@@ -78,8 +86,10 @@ public class ProductService {
                 .stock(p.getStock())
                 .category(p.getCategory())
                 .thumbnail(thumbnail)
+                .images(images)
                 .build();
     }
+
 
     public List<ProductResponseDTO> getAll() {
         return productRepository.findAll()
@@ -133,21 +143,27 @@ public class ProductService {
         );
     }
 
-
-
-    public Product getById(Long id) {
-        return productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
-    }
-
     @Transactional
     public ProductDTO updateProduct(
             Long productId,
             ProductRequestDTO request,
-            List<MultipartFile> newImages
+            List<MultipartFile> newImages,
+            List<Long> deletedImageIds
     ) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+
+        // ===== DELETE IMAGES (ĐÚNG CÁCH) =====
+        if (deletedImageIds != null && !deletedImageIds.isEmpty()) {
+
+            product.getImages().removeIf(img -> {
+                if (deletedImageIds.contains(img.getImageId())) {
+                    fileStorageService.deleteFile(img.getImageUrl());
+                    return true; // Hibernate sẽ DELETE
+                }
+                return false;
+            });
+        }
 
         // ===== UPDATE FIELD =====
         product.setName(request.getName());
@@ -166,9 +182,10 @@ public class ProductService {
 
                 ProductImage img = new ProductImage();
                 img.setImageUrl(imageUrl);
-                img.setProduct(product);
                 img.setThumbnail(false);
 
+                // QUAN TRỌNG
+                img.setProduct(product);
                 product.getImages().add(img);
             }
         }
@@ -185,9 +202,6 @@ public class ProductService {
     }
 
 
-    public void delete(Long id) {
-        productRepository.deleteById(id);
-    }
 
     public Page<ProductDTO> getProducts(
             String keyword,

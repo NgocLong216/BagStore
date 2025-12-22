@@ -1,4 +1,4 @@
-import { FaUsers, FaChartBar, FaShoppingBag, FaSignOutAlt } from "react-icons/fa";
+import { FaUsers, FaChartBar, FaShoppingBag, FaSignOutAlt, FaBoxOpen } from "react-icons/fa";
 import { NavLink, useNavigate } from "react-router-dom";
 
 export default function AdminSidebar() {
@@ -39,7 +39,11 @@ export default function AdminSidebar() {
         </NavLink>
 
         <NavLink to="/admin/products" className={linkClass}>
-          <FaShoppingBag /> Sản phẩm
+          <FaBoxOpen /> Sản phẩm
+        </NavLink>
+
+        <NavLink to="/admin/orders" className={linkClass}>
+          <FaShoppingBag /> Đơn hàng
         </NavLink>
       </nav>
 

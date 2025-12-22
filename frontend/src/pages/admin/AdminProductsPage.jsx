@@ -12,6 +12,8 @@ import { IoIosAddCircleOutline } from "react-icons/io";
 import AdminSidebar from "../../components/AdminSidebar";
 import AdminHeader from "../../components/AdminHeader";
 import ProductModal from "../../components/ProductModal";
+import { getCategoryLabel } from "../../constants/bagCategories";
+
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState([]);
@@ -53,22 +55,32 @@ export default function AdminProductsPage() {
 
   const handleSubmitProduct = async (data, imageFiles) => {
     const formData = new FormData();
-  
+
     imageFiles.forEach(file => {
       formData.append("images", file);
     });
-  
+
     Object.keys(data).forEach(key => {
-      formData.append(key, data[key]);
+      if (key !== "deletedImageIds") {
+        formData.append(key, data[key]);
+      }
     });
-  
+
+
+    if (Array.isArray(data.deletedImageIds) && data.deletedImageIds.length > 0) {
+      data.deletedImageIds.forEach(id => {
+        formData.append("deletedImageIds", id);
+      });
+    }
+
+
     const url =
       modalMode === "create"
         ? "http://localhost:8080/api/admin/products"
         : `http://localhost:8080/api/admin/products/${editingProduct.productId}`;
-  
+
     const method = modalMode === "create" ? "POST" : "PUT";
-  
+
     await fetch(url, {
       method,
       headers: {
@@ -76,11 +88,11 @@ export default function AdminProductsPage() {
       },
       body: formData,
     });
-  
+
     fetchProducts();
     setShowModal(false);
   };
-  
+
 
 
   // delete
@@ -226,6 +238,7 @@ export default function AdminProductsPage() {
                       <th className="p-4">ID</th>
                       <th className="p-4">Danh mục</th>
                       <th className="p-4">Tồn kho</th>
+                      <th className="p-4">Giá</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -247,10 +260,16 @@ export default function AdminProductsPage() {
                           {p.name}
                         </td>
                         <td className="p-4">{p.productId}</td>
-                        <td className="p-4">{p.category}</td>
+                        <td className="p-4">
+                          {getCategoryLabel(p.category)}
+                        </td>
                         <td className="p-4">
                           {p.stock > 0 ? p.stock : "Hết hàng"}
                         </td>
+                        <td className="p-4">
+                          {p.price.toLocaleString("vi-VN")} ₫
+                        </td>
+
                       </tr>
                     ))}
                   </tbody>

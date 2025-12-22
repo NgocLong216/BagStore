@@ -11,3 +11,5 @@ export const BAG_CATEGORIES = [
     { label: "Balo mini", value: "mini" }
   ];
   
+  export const getCategoryLabel = (value) =>
+    BAG_CATEGORIES.find(c => c.value === value)?.label || value;

@@ -46,6 +46,21 @@ public class FileStorageService {
             throw new RuntimeException("Không thể lưu file", e);
         }
     }
+
+    public void deleteFile(String imageUrl) {
+        try {
+            if (imageUrl == null) return;
+
+            // imageUrl = "/uploads/abc.jpg"
+            String filename = imageUrl.replace("/uploads/", "");
+            Path path = Paths.get("uploads").resolve(filename);
+
+            Files.deleteIfExists(path);
+        } catch (Exception e) {
+            System.err.println("Không xóa được file: " + imageUrl);
+        }
+    }
+
 }
 
 
