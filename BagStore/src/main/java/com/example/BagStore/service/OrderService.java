@@ -33,6 +33,9 @@ public class OrderService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private InvoicePdfService invoicePdfService;
+
     @Transactional
     public Order createOrder(Integer userId, OrderRequestDTO request) {
 
@@ -275,6 +278,55 @@ public class OrderService {
         orderRepository.save(order);
     }
 
+    public OrderAdminDetailResponseDTO getOrderDetailAdmin(Long orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        var items = order.getItems().stream()
+                .map(item -> {
+                    Product product = item.getProduct();
+
+                    String imageUrl = product.getImages().isEmpty()
+                            ? null
+                            : product.getImages().get(0).getImageUrl();
+
+                    BigDecimal subTotal =
+                            item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+
+                    return new OrderItemAdminDTO(
+                            product.getProductId(),
+                            product.getName(),
+                            imageUrl,
+                            item.getPrice(),
+                            item.getQuantity(),
+                            subTotal
+                    );
+                })
+                .toList();
+
+        return new OrderAdminDetailResponseDTO(
+                order.getOrderId(),
+                order.getUserId(),
+                order.getFullName(),
+                order.getPhone(),
+                order.getSubAddress(),
+                order.getAddress(),
+                order.getNote(),
+                order.getStatus(),
+                order.getTotalPrice(),
+                order.getCreatedAt(),
+                items
+        );
+    }
+
+    public byte[] generateInvoicePdf(Long orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        return invoicePdfService.generateInvoice(order);
+    }
 
 
 }

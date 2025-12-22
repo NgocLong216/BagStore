@@ -2,15 +2,13 @@ package com.example.BagStore.controller.admin;
 
 import com.example.BagStore.config.JwtUtil;
 import com.example.BagStore.dto.*;
+import com.example.BagStore.entity.Order;
 import com.example.BagStore.entity.Product;
 import com.example.BagStore.entity.ProductImage;
 import com.example.BagStore.entity.User;
 import com.example.BagStore.repository.ProductImageRepository;
 import com.example.BagStore.security.CustomUserDetails;
-import com.example.BagStore.service.FileStorageService;
-import com.example.BagStore.service.OrderService;
-import com.example.BagStore.service.ProductService;
-import com.example.BagStore.service.UserService;
+import com.example.BagStore.service.*;
 import io.jsonwebtoken.Jwt;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +47,11 @@ public class AdminController {
     @Autowired
     private OrderService orderService;
 
+    @Autowired
+    private InvoicePdfService invoicePdfService;
+
+    @Autowired
+    private DashboardService dashboardService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users")
@@ -163,5 +166,44 @@ public class AdminController {
         orderService.updateOrderStatus(id, request.status());
         return ResponseEntity.ok("Cập nhật trạng thái đơn hàng thành công");
     }
+
+    @GetMapping("/orders/{id}")
+    public ResponseEntity<OrderAdminDetailResponseDTO> getOrderDetailAdmin(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(orderService.getOrderDetailAdmin(id));
+    }
+
+    @GetMapping("/orders/{id}/invoice")
+    public ResponseEntity<byte[]> printInvoice(@PathVariable Long id) {
+
+        byte[] pdf = orderService.generateInvoicePdf(id);
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition",
+                        "attachment; filename=invoice_" + id + ".pdf")
+                .header("Content-Type", "application/pdf")
+                .body(pdf);
+    }
+
+    @GetMapping("/dashboard")
+    public DashboardResponseDTO getDashboard() {
+        return dashboardService.getDashboard();
+    }
+
+    @GetMapping("/dashboard/top-products")
+    public List<TopProductDTO> topProducts(
+            @RequestParam(defaultValue = "5") int limit
+    ) {
+        return dashboardService.getTopSellingProducts(limit);
+    }
+
+    @GetMapping("/dashboard/revenue-by-month")
+    public List<RevenueByMonthDTO> revenueByMonth(
+            @RequestParam int year
+    ) {
+        return dashboardService.getRevenueByMonth(year);
+    }
+
 
 }

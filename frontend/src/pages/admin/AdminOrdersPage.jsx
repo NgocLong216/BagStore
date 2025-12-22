@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import AdminSidebar from "../../components/AdminSidebar";
 import AdminHeader from "../../components/AdminHeader";
 
+
 import {
     FaSearch,
     FaEye,
     FaMoneyBill,
     FaTruck,
     FaCheckCircle,
-    FaTimesCircle
+    FaTimesCircle,
+    FaPrint 
 } from "react-icons/fa";
 
 export default function AdminOrdersPage() {
@@ -22,13 +24,68 @@ export default function AdminOrdersPage() {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [nextStatus, setNextStatus] = useState("");
 
+    const [showDetailModal, setShowDetailModal] = useState(false);
+    const [orderDetail, setOrderDetail] = useState(null);
+
+    const openOrderDetail = async orderId => {
+        try {
+            const token = localStorage.getItem("token");
+
+            const res = await fetch(
+                `http://localhost:8080/api/admin/orders/${orderId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            if (!res.ok) throw new Error("Không lấy được chi tiết đơn hàng");
+
+            const data = await res.json();
+            setOrderDetail(data);
+            setShowDetailModal(true);
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+
     const openConfirmModal = (order, status) => {
         setSelectedOrder(order);
         setNextStatus(status);
         setShowModal(true);
     };
 
-
+    const printInvoice = async () => {
+        try {
+          const token = localStorage.getItem("token");
+      
+          const res = await fetch(
+            `http://localhost:8080/api/admin/orders/${orderDetail.orderId}/invoice`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          );
+      
+          if (!res.ok) throw new Error("Không in được hóa đơn");
+      
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+      
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `invoice_${orderDetail.orderId}.pdf`;
+          a.click();
+      
+          window.URL.revokeObjectURL(url);
+        } catch (err) {
+          alert(err.message);
+        }
+      };
+      
 
     const confirmUpdateStatus = async () => {
         if (!selectedOrder) return;
@@ -79,18 +136,18 @@ export default function AdminOrdersPage() {
 
 
     useEffect(() => {
-        if (showModal) {
-          // Khoá scroll
-          document.body.style.overflow = "hidden";
+        if (showModal || showDetailModal) {
+            // Khoá scroll
+            document.body.style.overflow = "hidden";
         } else {
-          // Mở lại scroll
-          document.body.style.overflow = "auto";
+            // Mở lại scroll
+            document.body.style.overflow = "auto";
         }
-    
+
         return () => {
-          document.body.style.overflow = "auto";
+            document.body.style.overflow = "auto";
         };
-      }, [showModal]);
+    }, [showModal, showDetailModal]);
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -199,8 +256,8 @@ export default function AdminOrdersPage() {
 
                     {/* TABLE */}
                     <div className="bg-white rounded-lg shadow overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-100">
+                        <table className="w-full ">
+                            <thead className="bg-gray-100 ">
                                 <tr>
                                     <th className="p-4 text-left">Mã đơn</th>
                                     <th className="p-4 text-left">Khách hàng</th>
@@ -214,11 +271,11 @@ export default function AdminOrdersPage() {
 
                             <tbody>
                                 {filteredOrders.map(o => (
-                                    <tr key={o.orderId} className=" hover:bg-gray-50">
+                                    <tr key={o.orderId} className=" hover:bg-gray-50 border-t border-gray-300">
                                         <td className="p-4 font-medium">#{o.orderId}</td>
                                         <td className="p-4">{o.user}</td>
                                         <td className="p-4 flex items-center gap-1">
-                                            <FaMoneyBill className="text-green-700" />
+                                            
                                             {o.total.toLocaleString()} đ
                                         </td>
                                         <td className="p-4">{o.paymentMethod}</td>
@@ -243,8 +300,9 @@ export default function AdminOrdersPage() {
 
                                         <td className="p-4">{o.createdAt}</td>
                                         <td className="p-4 text-center">
-                                            <button className="text-blue-600 hover:text-blue-800">
-                                                <FaEye />
+                                            <button className="text-blue-600 hover:text-blue-800 hover:bg-gray-200 p-2 rounded-lg"
+                                                onClick={() => openOrderDetail(o.orderId)}>
+                                                Chi tiết
                                             </button>
                                         </td>
                                     </tr>
@@ -302,6 +360,98 @@ export default function AdminOrdersPage() {
                     </div>
                 </div>
             )}
+            {showDetailModal && orderDetail && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="bg-white rounded-lg w-[800px] max-h-[90vh] overflow-y-auto p-6">
+
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-semibold">
+                                Chi tiết đơn hàng #{orderDetail.orderId}
+                            </h2>
+                            <button
+                                onClick={() => setShowDetailModal(false)}
+                                className="text-gray-500 hover:text-black"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* THÔNG TIN KHÁCH */}
+                        <div className="grid grid-cols-2 gap-4 mb-5">
+                            <div>
+                                <p><b>Khách hàng:</b> {orderDetail.fullName}</p>
+                                <p><b>SĐT:</b> {orderDetail.phone}</p>
+                                <p><b>Trạng thái:</b> {orderDetail.status}</p>
+                            </div>
+                            <div>
+                                <p><b>Ngày đặt:</b> {orderDetail.createdAt.slice(0, 10)}</p>
+                                <p><b>Ghi chú:</b> {orderDetail.note || "—"}</p>
+                            </div>
+                        </div>
+
+                        {/* ĐỊA CHỈ */}
+                        <div className="mb-5">
+                            <p><b>Địa chỉ giao hàng:</b></p>
+                            <p>
+                                {orderDetail.subAddress}, {orderDetail.address}
+                            </p>
+                        </div>
+
+                        {/* DANH SÁCH SẢN PHẨM */}
+                        <table className="w-full border border-gray-300 ">
+                            <thead className="bg-gray-100">
+                                <tr>
+                                    <th className="p-3 text-left">Sản phẩm</th>
+                                    <th className="p-3 text-center">Giá</th>
+                                    <th className="p-3 text-center">SL</th>
+                                    <th className="p-3 text-center">Tạm tính</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {orderDetail.items.map(item => (
+                                    <tr key={item.productId} className="border-t border-gray-300 ">
+                                        <td className="p-3 flex items-center gap-3">
+                                            {item.imageUrl && (
+                                                <img
+                                                    src={item.imageUrl}
+                                                    alt=""
+                                                    className="w-12 h-12 object-cover rounded"
+                                                />
+                                            )}
+                                            {item.productName}
+                                        </td>
+                                        <td className="p-3 text-center">
+                                            {item.price.toLocaleString()} đ
+                                        </td>
+                                        <td className="p-3 text-center">{item.quantity}</td>
+                                        <td className="p-3 text-center">
+                                            {item.subTotal.toLocaleString()} đ
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+
+                        {/* TỔNG TIỀN */}
+                        <div className="flex justify-between items-center mt-5">
+
+                        {orderDetail.status === "COMPLETED" && (
+                            <button
+                                onClick={printInvoice}
+                                className="flex items-center gap-3 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-800"
+                            >
+                                <FaPrint/> In hóa đơn PDF
+                            </button>)}
+
+                            <div className="text-lg font-semibold">
+                                Tổng tiền: {orderDetail.totalPrice.toLocaleString()} đ
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            )}
+
 
         </div>
     );

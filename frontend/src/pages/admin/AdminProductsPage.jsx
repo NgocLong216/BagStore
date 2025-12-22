@@ -246,7 +246,7 @@ export default function AdminProductsPage() {
                       <tr
                         key={p.productId}
                         onClick={() => setSelectedProduct(p)}
-                        className={`border-t cursor-pointer
+                        className={`border-t border-gray-300 cursor-pointer
                         ${selectedProduct?.productId === p.productId
                             ? "bg-green-600 text-white"
                             : "hover:bg-gray-50"}

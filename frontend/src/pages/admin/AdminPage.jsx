@@ -1,81 +1,100 @@
-import { FaUsers, FaChartBar, FaCog, FaSignOutAlt, FaBell, FaShoppingBag } from "react-icons/fa";
-import { Link, useNavigate, NavLink } from "react-router-dom";
+import { useEffect, useState } from "react";
 import AdminSidebar from "../../components/AdminSidebar";
 import AdminHeader from "../../components/AdminHeader";
+import TopProducts from "../../components/TopProducts";
+import RevenueChart from "../../components/RevenueChart";
+import {
+  FaShoppingCart,
+  FaUsers,
+  FaMoneyBill,
+  FaTruck
+} from "react-icons/fa";
 
-export default function AdminDashboard() {
-  const navigate = useNavigate();
+export default function AdminDashboardPage() {
+  const [data, setData] = useState(null);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login"); // hoặc "/"
-    window.location.reload(); // đảm bảo App re-render lại user = null
-  };
+  useEffect(() => {
+    fetch("http://localhost:8080/api/admin/dashboard", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      }
+    })
+      .then(res => res.json())
+      .then(setData);
+  }, []);
 
-  const linkClass = ({ isActive }) =>
-  `flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition
-   ${isActive
-     ? "bg-white text-green-700"
-     : "hover:bg-white hover:text-green-700"
-   }`;
-
+  if (!data) return <div>Loading...</div>;
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      <AdminSidebar/>
-      {/* Main */}
-      <main className="flex-1">
-        {/* Topbar */}
-        <AdminHeader title="Thống Kê Dữ Liệu" />
+    <div className="flex">
+      <AdminSidebar />
 
-        {/* Content */}
-        <section className="p-8">
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <StatCard title="Purchases" value="17,663" />
-            <StatCard title="Refunds" value="$4,523" />
-            <StatCard title="Visitors" value="46,085" />
+      <div className="flex-1 bg-gray-100 min-h-screen">
+        <AdminHeader title="Dashboard" />
+
+        <div className="p-8">
+          <div className="grid grid-cols-4 gap-6">
+
+            {/* Tổng đơn */}
+            <StatCard
+              icon={<FaShoppingCart />}
+              title="Tổng đơn"
+              value={data.totalOrders}
+              color="bg-blue-500"
+            />
+
+            {/* Đơn chờ */}
+            <StatCard
+              icon={<FaTruck />}
+              title="Chờ xử lý"
+              value={data.pendingOrders}
+              color="bg-yellow-500"
+            />
+
+            {/* Doanh thu */}
+            <StatCard
+              icon={<FaMoneyBill />}
+              title="Doanh thu"
+              value={data.totalRevenue.toLocaleString() + " đ"}
+              color="bg-green-500"
+            />
+
+            {/* Users */}
+            <StatCard
+              icon={<FaUsers />}
+              title="Người dùng"
+              value={data.totalUsers}
+              color="bg-purple-500"
+            />
+
+
+
           </div>
 
-          {/* User table */}
-          <div className="bg-white rounded-xl shadow">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="font-semibold">User Management</h2>
-              <button className="px-4 py-2 bg-[#2c5f2d] text-white rounded-lg">Add User</button>
+          <div className="grid grid-cols-3 gap-6 mt-8">
+            <div className="col-span-2">
+              <RevenueChart />
             </div>
-            <table className="w-full text-left">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="p-3">Name</th>
-                  <th className="p-3">Email</th>
-                  <th className="p-3">Phone</th>
-                  <th className="p-3">Role</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[1, 2, 3].map(i => (
-                  <tr key={i} className="border-t hover:bg-gray-50">
-                    <td className="p-3">User {i}</td>
-                    <td className="p-3">user{i}@mail.com</td>
-                    <td className="p-3">0123456789</td>
-                    <td className="p-3">USER</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <TopProducts />
           </div>
-        </section>
-      </main>
+
+        </div>
+
+      </div>
     </div>
   );
 }
 
-function StatCard({ title, value }) {
+function StatCard({ icon, title, value, color }) {
   return (
-    <div className="bg-white rounded-xl shadow p-6">
-      <p className="text-gray-500">{title}</p>
-      <p className="text-3xl font-bold mt-2">{value}</p>
+    <div className="bg-white rounded-lg shadow p-6 flex items-center gap-4">
+      <div className={`${color} text-white p-4 rounded-full text-xl`}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-gray-500">{title}</p>
+        <p className="text-2xl font-bold">{value}</p>
+      </div>
     </div>
   );
 }
