@@ -62,14 +62,22 @@ public class OrderService {
         // ================== TẠO ORDER ==================
         Order order = Order.builder()
                 .userId(userId)
-                .status("PENDING")
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
                 .subAddress(request.getSubAddress())
                 .address(request.getAddress())
                 .note(request.getNote())
+                .paymentMethod(request.getPaymentMethod())
+                .paymentRef(request.getPaymentRef()) // BANK
+                .paymentStatus(
+                        "BANK".equals(request.getPaymentMethod())
+                                ? "PENDING"
+                                : "PAID"
+                )
+                .status("PENDING")
                 .createdAt(LocalDateTime.now())
                 .build();
+
 
         BigDecimal total = BigDecimal.ZERO;
         List<OrderItem> orderItems = new ArrayList<>();
@@ -85,7 +93,14 @@ public class OrderService {
             }
 
             // ===== TRỪ TỒN =====
-            product.setStock(product.getStock() - itemDTO.getQuantity());
+            boolean shouldReduceStock =
+                    !"BANK".equals(request.getPaymentMethod());
+
+            if (shouldReduceStock) {
+                product.setStock(product.getStock() - itemDTO.getQuantity());
+                productRepository.save(product);
+            }
+
             productRepository.save(product);
 
             BigDecimal itemTotal = product.getPrice()
@@ -102,7 +117,13 @@ public class OrderService {
             total = total.add(itemTotal);
 
             // ===== XOÁ CHỈ CART ĐÃ THANH TOÁN =====
-            cartRepository.deleteByCartId(itemDTO.getCartId());
+            if (itemDTO.getCartId() != null) {
+                cartRepository.deleteByCartIdAndUserId(
+                        itemDTO.getCartId(),
+                        userId
+                );
+            }
+
         }
 
         order.setTotalPrice(total);
@@ -148,6 +169,7 @@ public class OrderService {
                             order.getTotalPrice(),
                             order.getStatus(),
                             order.getCreatedAt(),
+                            order.getPaymentMethod(),
                             items
                     );
                 })
@@ -196,6 +218,7 @@ public class OrderService {
                 order.getAddress(),
                 order.getNote(),
                 order.getCreatedAt(),
+                order.getPaymentMethod(),
                 items
         );
     }
@@ -232,7 +255,9 @@ public class OrderService {
                         order.getPhone(),
                         order.getTotalPrice(),
                         order.getStatus(),
-                        order.getCreatedAt()
+                        order.getCreatedAt(),
+                        order.getPaymentMethod(),
+                        order.getPaymentRef()
                 ))
                 .toList();
     }
@@ -316,6 +341,8 @@ public class OrderService {
                 order.getStatus(),
                 order.getTotalPrice(),
                 order.getCreatedAt(),
+                order.getPaymentMethod(),
+                order.getPaymentRef(),
                 items
         );
     }

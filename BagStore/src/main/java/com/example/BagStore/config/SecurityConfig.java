@@ -35,7 +35,8 @@ public class SecurityConfig {
             "/avatars/**",
             "/static/**",
             "/api/auth/google",
-            "/uploads/**"
+            "/uploads/**",
+            "/api/momo/**"
     };
 
     @Bean
@@ -51,7 +52,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/avatars/**").permitAll()
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers("/api/cart/**").hasRole("USER")
+                        .requestMatchers("/api/cart/**", "/api/pay/**").hasRole("USER")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

@@ -10,6 +10,8 @@ public record OrderAdminResponseDTO(
         String phone,
         BigDecimal totalPrice,
         String status,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String paymentMethod,
+        String paymentRef
 ) {}
 

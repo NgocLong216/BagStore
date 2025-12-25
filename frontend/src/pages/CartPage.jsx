@@ -237,7 +237,7 @@ export default function CartPage() {
             {/* Banner */}
             <section
                 id="banner"
-                className="relative flex flex-col justify-center items-center text-center bg-[url('https://i.pinimg.com/1200x/f0/3b/84/f03b842864fd7c785c0e986068366a50.jpg')] bg-cover bg-center w-full h-[40vh] mt-[88px]"
+                className="relative flex flex-col justify-center items-center text-center bg-[url('https://res.cloudinary.com/ddtm7dvwo/image/upload/v1766449258/%E1%BA%A2nh1_htkuzy.png')] bg-[position:150%_78%] w-full h-[40vh] mt-[88px]"
             >
                 <div className="absolute inset-0 bg-black/50"></div>
                 <div className="relative z-10">

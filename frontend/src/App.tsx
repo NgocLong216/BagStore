@@ -25,6 +25,8 @@ import AdminPage from "./pages/admin/AdminPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminProductsPage from "./pages/admin/AdminProductsPage";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
+import BankTransferPage from "./pages/BankTransferPage";
+
 
 
 function App() {
@@ -64,6 +66,8 @@ function App() {
         <Route path="/order-success" element={<OrderSuccessPage />} />
         <Route path="/orders" element={<OrderListPage />} />
         <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+        <Route path="/bank-transfer" element={<BankTransferPage />} />
+
       </Route>
 
       {/* ADMIN LAYOUT (KHÔNG HEADER / FOOTER) */}

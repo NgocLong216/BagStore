@@ -24,6 +24,7 @@ public class OrderDetailResponseDTO {
     private String note;
 
     private LocalDateTime createdAt;
+    private String paymentMethod;
 
     private List<OrderItemResponseDTO> items;
 }

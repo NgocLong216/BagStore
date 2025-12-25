@@ -11,7 +11,6 @@ public class OrderItemRequestDTO {
     @NotNull(message = "ProductId không được để trống")
     private Long productId;
 
-    @NotNull(message = "CartId không được để trống")
     private Integer cartId;
 
     @Min(value = 1, message = "Số lượng phải >= 1")

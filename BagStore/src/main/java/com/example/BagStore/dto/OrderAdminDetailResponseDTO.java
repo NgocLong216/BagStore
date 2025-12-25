@@ -15,5 +15,7 @@ public record OrderAdminDetailResponseDTO(
         String status,
         BigDecimal totalPrice,
         LocalDateTime createdAt,
+        String paymentMethod,
+        String paymentRef,
         List<OrderItemAdminDTO> items
 ) {}

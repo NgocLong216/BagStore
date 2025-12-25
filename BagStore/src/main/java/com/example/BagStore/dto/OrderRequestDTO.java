@@ -33,5 +33,8 @@ public class OrderRequestDTO {
     @NotEmpty(message = "Danh sách sản phẩm không được rỗng")
     @Valid
     private List<OrderItemRequestDTO> items;
+
+    private String paymentMethod; // BANK | COD | MOMO
+    private String paymentRef;    // tempCode (chỉ BANK)
 }
 

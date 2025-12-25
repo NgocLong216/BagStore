@@ -27,6 +27,18 @@ export default function AdminOrdersPage() {
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [orderDetail, setOrderDetail] = useState(null);
 
+    const statusMap = {
+        PENDING: "Đang xử lý",
+        COMPLETED: "Hoàn thành",
+        CANCELLED: "Đã hủy",
+      };
+
+    const paymentMap = {
+        COD: "Tiền mặt",
+        BANK: "Chuyển khoản",
+        MOMO: "Momo",
+      };
+
     const openOrderDetail = async orderId => {
         try {
             const token = localStorage.getItem("token");
@@ -169,8 +181,9 @@ export default function AdminOrdersPage() {
                     orderId: o.orderId,
                     user: o.fullName,
                     total: o.totalPrice,
-                    paymentMethod: "COD",
+                    paymentMethod: o.paymentMethod,
                     status: o.status,
+                    paymentRef: o.paymentRef,
                     createdAt: o.createdAt.slice(0, 10)
                 }));
 
@@ -278,7 +291,7 @@ export default function AdminOrdersPage() {
                                             
                                             {o.total.toLocaleString()} đ
                                         </td>
-                                        <td className="p-4">{o.paymentMethod}</td>
+                                        <td className="p-4">{paymentMap[o.paymentMethod]}</td>
                                         <td className="p-4">
                                             {o.status === "PENDING" ? (
 
@@ -381,7 +394,7 @@ export default function AdminOrdersPage() {
                             <div>
                                 <p><b>Khách hàng:</b> {orderDetail.fullName}</p>
                                 <p><b>SĐT:</b> {orderDetail.phone}</p>
-                                <p><b>Trạng thái:</b> {orderDetail.status}</p>
+                                <p><b>Trạng thái:</b> {statusMap[orderDetail.status]}</p>
                             </div>
                             <div>
                                 <p><b>Ngày đặt:</b> {orderDetail.createdAt.slice(0, 10)}</p>

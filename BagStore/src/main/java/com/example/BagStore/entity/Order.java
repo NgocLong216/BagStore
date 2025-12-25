@@ -43,5 +43,10 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<OrderItem> items = new ArrayList<>();
+
+    private String paymentMethod;   // COD | BANK | MOMO
+    private String paymentRef;      // TMP1735...
+    private String paymentStatus;   // PENDING | PAID | FAILED
+
 }
 
