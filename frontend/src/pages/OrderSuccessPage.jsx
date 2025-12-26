@@ -27,7 +27,7 @@ export default function OrderSuccessPage() {
                 <p className="text-gray-600 mb-4">
                     Mã đơn hàng:
                     <span className="font-semibold text-green-700">
-                        {" "}#{state?.orderId}
+                        {" "}#{state?.paymentRef}
                     </span>
                 </p>
 

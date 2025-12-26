@@ -89,7 +89,7 @@ export default function AdminOrdersPage() {
       
           const a = document.createElement("a");
           a.href = url;
-          a.download = `invoice_${orderDetail.orderId}.pdf`;
+          a.download = `invoice_${orderDetail.paymentRef}.pdf`;
           a.click();
       
           window.URL.revokeObjectURL(url);
@@ -202,11 +202,14 @@ export default function AdminOrdersPage() {
         let data = [...orders];
 
         if (keyword) {
+            const kw = keyword.toLowerCase();
+        
             data = data.filter(o =>
-                o.user.toLowerCase().includes(keyword.toLowerCase())
-                || o.orderId.toString().includes(keyword)
+                (o.user && o.user.toLowerCase().includes(kw)) ||
+                (o.paymentRef && o.paymentRef.toLowerCase().includes(kw))
             );
         }
+        
 
         if (statusFilter) {
             data = data.filter(o => o.status === statusFilter);
@@ -285,7 +288,7 @@ export default function AdminOrdersPage() {
                             <tbody>
                                 {filteredOrders.map(o => (
                                     <tr key={o.orderId} className=" hover:bg-gray-50 border-t border-gray-300">
-                                        <td className="p-4 font-medium">#{o.orderId}</td>
+                                        <td className="p-4 font-medium">#{o.paymentRef}</td>
                                         <td className="p-4">{o.user}</td>
                                         <td className="p-4 flex items-center gap-1">
                                             
@@ -379,7 +382,7 @@ export default function AdminOrdersPage() {
 
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold">
-                                Chi tiết đơn hàng #{orderDetail.orderId}
+                                Chi tiết đơn hàng #{orderDetail.paymentRef}
                             </h2>
                             <button
                                 onClick={() => setShowDetailModal(false)}

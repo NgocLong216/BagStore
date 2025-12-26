@@ -150,7 +150,7 @@ export default function OrderListPage() {
                                         <div className="flex justify-between items-center px-6 py-4 border-b border-[#d6d6d6]">
                                             <div>
                                                 <p className="font-semibold">
-                                                    Mã đơn hàng: #{order.orderId}
+                                                    Mã đơn hàng: #{order.paymentRef}
                                                 </p>
                                             </div>
 

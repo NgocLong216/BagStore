@@ -26,7 +26,7 @@ export default function BankTransferPage() {
                     subAddress: state.subAddress,
                     address: state.address,
                     note: state.note,
-                    paymentRef: state.tempCode,
+                    paymentRef: state.paymentRef,
                     items: state.items.map(i => ({
                         cartId: i.cart_id,
                         productId: i.productId,
@@ -41,6 +41,7 @@ export default function BankTransferPage() {
 
             navigate("/order-success", {
                 state: {
+                    paymentRef: state.paymentRef,
                     orderId: data.orderId,
                     totalPrice: data.totalPrice
                 }
@@ -56,7 +57,7 @@ export default function BankTransferPage() {
         return null;
     }
 
-    const { tempCode, totalPrice } = state;
+    const { paymentRef, totalPrice } = state;
 
     const BANK_INFO = {
         name: "MB BANK",
@@ -65,7 +66,7 @@ export default function BankTransferPage() {
         bin: "970422"
     };
 
-    const transferContent = tempCode;
+    const transferContent = paymentRef;
 
     const qrUrl = `https://img.vietqr.io/image/${BANK_INFO.bin}-${BANK_INFO.accountNumber}-compact2.png?amount=${totalPrice}&addInfo=${transferContent}&accountName=${BANK_INFO.accountName}`;
 

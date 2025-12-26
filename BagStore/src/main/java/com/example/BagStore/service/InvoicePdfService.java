@@ -29,7 +29,7 @@ public class InvoicePdfService {
         document.add(title);
         document.add(Chunk.NEWLINE);
 
-        document.add(new Paragraph("Mã đơn: #" + order.getOrderId(), boldFont));
+        document.add(new Paragraph("Mã đơn: #" + order.getPaymentRef(), boldFont));
         document.add(new Paragraph("Khách hàng: " + order.getFullName()));
         document.add(new Paragraph("SĐT: " + order.getPhone()));
         document.add(new Paragraph(

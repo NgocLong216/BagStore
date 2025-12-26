@@ -30,7 +30,7 @@ export default function AdminDashboardPage() {
       <AdminSidebar />
 
       <div className="flex-1 bg-gray-100 min-h-screen">
-        <AdminHeader title="Dashboard" />
+        <AdminHeader title="Thống Kê" />
 
         <div className="p-8">
           <div className="grid grid-cols-4 gap-6">

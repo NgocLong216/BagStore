@@ -46,11 +46,11 @@ export default function CheckoutPage() {
     
         // ===== BANK: chỉ chuyển trang, KHÔNG tạo order =====
         if (paymentMethod === "BANK") {
-            const tempCode = `TMP${Date.now()}`;
+            const paymentRef = `DH${Date.now()}`;
 
             navigate("/bank-transfer", {
                 state: {
-                    tempCode,
+                    paymentRef,
                     fullName,
                     phone,
                     subAddress,
@@ -65,7 +65,7 @@ export default function CheckoutPage() {
     
         try {
             setLoading(true);
-            const paymentRef = `TMP${Date.now()}`;
+            const paymentRef = `DH${Date.now()}`;
     
             // ===== 1. TẠO ORDER (COD + MOMO) =====
             const orderRes = await fetch("http://localhost:8080/api/orders", {
@@ -142,6 +142,7 @@ export default function CheckoutPage() {
             // ===== 3. COD =====
             navigate("/order-success", {
                 state: {
+                    paymentRef: paymentRef,
                     orderId: orderData.orderId,
                     totalPrice: orderData.totalPrice,
                 },

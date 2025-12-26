@@ -170,6 +170,7 @@ public class OrderService {
                             order.getStatus(),
                             order.getCreatedAt(),
                             order.getPaymentMethod(),
+                            order.getPaymentRef(),
                             items
                     );
                 })
@@ -219,6 +220,7 @@ public class OrderService {
                 order.getNote(),
                 order.getCreatedAt(),
                 order.getPaymentMethod(),
+                order.getPaymentRef(),
                 items
         );
     }

@@ -65,7 +65,7 @@ export default function OrderDetailPage() {
                         </button>
 
                         <h1 className="text-2xl font-bold">
-                            Chi tiết đơn hàng #{order.orderId}
+                            Chi tiết đơn hàng #{order.paymentRef}
                         </h1>
 
                         <p className="text-gray-500 mt-1">
