@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
 import Pagination from "../components/Pagination";
+import { BAG_CATEGORIES } from "../constants/bagCategories";
 
 
 export default function ProductPage({ user }) {
@@ -22,20 +23,28 @@ export default function ProductPage({ user }) {
 
   const { cartCount, setCartCount } = useCart();
   const [showToast, setShowToast] = useState(false);
+  const category = queryParams.get("category") || "";
+  const [selectedCategory, setSelectedCategory] = useState(category);
+
 
   const getProductImage = (p) => {
     if (!p.imageUrl) {
       return "https://placehold.co/300x300?text=No+Image";
     }
-  
+
     // URL đầy đủ (cloud, http...)
     if (p.imageUrl.startsWith("http")) {
       return p.imageUrl;
     }
-  
+
     // Ảnh upload từ backend
     return `http://localhost:8080${p.imageUrl}`;
   };
+
+  useEffect(() => {
+    setSelectedCategory(category);
+  }, [category]);
+
 
   // Đồng bộ search box với keyword trên URL
   useEffect(() => {
@@ -45,7 +54,7 @@ export default function ProductPage({ user }) {
   // Fetch sản phẩm mỗi khi keyword, page, sort thay đổi
   useEffect(() => {
     fetch(
-      `http://localhost:8080/api/products?keyword=${keyword}&page=${page}&size=${size}&sortBy=${sortBy}&order=${order}`
+      `http://localhost:8080/api/products?keyword=${keyword}&category=${selectedCategory}&page=${page}&size=${size}&sortBy=${sortBy}&order=${order}`
     )
       .then((res) => res.json())
       .then((data) => {
@@ -53,8 +62,9 @@ export default function ProductPage({ user }) {
         setTotalPages(data.totalPages);
         window.scrollTo({ top: 0, behavior: "smooth" });
       })
-      .catch((err) => console.error("Error fetching products:", err));
-  }, [keyword, sortBy, order, page, size]);
+      .catch((err) => console.error(err));
+  }, [keyword, selectedCategory, sortBy, order, page, size]);
+
 
   // Xử lý search
   const handleSearch = (e) => {
@@ -130,7 +140,7 @@ export default function ProductPage({ user }) {
           {keyword ? `Kết quả cho "${keyword}"` : "Tất Cả Sản Phẩm"}
         </h1>
 
-        {/* Search & Sort */}
+        {/* Search & Filter & Sort */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           {/* Search */}
           <form onSubmit={handleSearch} className="relative">
@@ -144,22 +154,53 @@ export default function ProductPage({ user }) {
             <FaSearch className="absolute right-4 top-3 text-gray-500" />
           </form>
 
-          {/* Sort */}
-          <select
-            value={`${sortBy}-${order}`}
-            onChange={(e) => {
-              const [s, o] = e.target.value.split("-");
-              setSortBy(s);
-              setOrder(o);
-              setPage(0);
-            }}
-            className=" px-4 py-2 bg-gray-200 rounded-lg focus:outline-none"
-          >
-            <option value="createdAt-desc">Mới nhất</option>
-            <option value="createdAt-asc">Cũ nhất</option>
-            <option value="price-asc">Giá tăng dần</option>
-            <option value="price-desc">Giá giảm dần</option>
-          </select>
+          {/* Filter Category */}
+          <div className="gap-3 flex">
+            <select
+              value={selectedCategory}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSelectedCategory(value);
+                setPage(0);
+
+                const params = new URLSearchParams(location.search);
+
+                if (value) {
+                  params.set("category", value);
+                } else {
+                  params.delete("category");
+                }
+
+                navigate(`/products?${params.toString()}`);
+              }}
+              className="px-4 py-2 bg-gray-200 rounded-lg focus:outline-none"
+            >
+              <option value="">Tất cả danh mục</option>
+              {BAG_CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+
+
+            {/* Sort */}
+            <select
+              value={`${sortBy}-${order}`}
+              onChange={(e) => {
+                const [s, o] = e.target.value.split("-");
+                setSortBy(s);
+                setOrder(o);
+                setPage(0);
+              }}
+              className=" px-4 py-2 bg-gray-200 rounded-lg focus:outline-none"
+            >
+              <option value="createdAt-desc">Mới nhất</option>
+              <option value="createdAt-asc">Cũ nhất</option>
+              <option value="price-asc">Giá tăng dần</option>
+              <option value="price-desc">Giá giảm dần</option>
+            </select>
+          </div>
         </div>
 
         {/* Grid Products */}
@@ -169,6 +210,14 @@ export default function ProductPage({ user }) {
               key={p.productId}
               className="relative border border-[rgb(204,231,208)] rounded-xl shadow-sm p-4 hover:shadow-lg transition group"
             >
+              {/* Badge HẾT */}
+              {p.stock === 0 && (
+                <div className="absolute top-3 right-3 w-11 h-11 rounded-full bg-black text-white
+                  flex items-center justify-center text-sm font-semibold z-10">
+                  HẾT
+                </div>
+              )}
+
               <a href={`/product/${p.productId}`}>
                 <div className="flex justify-center items-center min-h-[250px]">
                   <img
@@ -189,12 +238,20 @@ export default function ProductPage({ user }) {
               <button
                 onClick={(e) => {
                   e.preventDefault();
+                  if (p.stock === 0) return;
                   addToCart(p.productId);
                 }}
-                className="absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-[#e0a46e] text-white hover:bg-green-700 transition opacity-0 group-hover:opacity-100"
+                disabled={p.stock === 0}
+                className={`absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center
+                rounded-full transition
+                ${p.stock === 0
+                    ? "bg-gray-400 cursor-not-allowed opacity-60"
+                    : "bg-[#e0a46e] text-white hover:bg-green-700 opacity-0 group-hover:opacity-100"
+                  }`}
               >
                 <FaShoppingCart />
               </button>
+
             </div>
           ))}
         </div>

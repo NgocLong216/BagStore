@@ -2,10 +2,7 @@ package com.example.BagStore.controller.admin;
 
 import com.example.BagStore.config.JwtUtil;
 import com.example.BagStore.dto.*;
-import com.example.BagStore.entity.Order;
-import com.example.BagStore.entity.Product;
-import com.example.BagStore.entity.ProductImage;
-import com.example.BagStore.entity.User;
+import com.example.BagStore.entity.*;
 import com.example.BagStore.repository.ProductImageRepository;
 import com.example.BagStore.security.CustomUserDetails;
 import com.example.BagStore.service.*;
@@ -52,6 +49,9 @@ public class AdminController {
 
     @Autowired
     private DashboardService dashboardService;
+
+    @Autowired
+    private ContactService contactService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users")
@@ -205,5 +205,19 @@ public class AdminController {
         return dashboardService.getRevenueByMonth(year);
     }
 
+    @GetMapping("/contacts")
+    public List<Contact> getAllContacts() {
+        return contactService.getAllContacts();
+    }
 
+    @PutMapping("/contacts/{id}/reply")
+    public void markAsReplied(@PathVariable Long id) {
+        contactService.markAsReplied(id);
+    }
+
+    //  DELETE
+    @DeleteMapping("/contacts/{id}")
+    public void deleteContact(@PathVariable Long id) {
+        contactService.delete(id);
+    }
 }

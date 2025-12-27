@@ -205,6 +205,7 @@ public class ProductService {
 
     public Page<ProductDTO> getProducts(
             String keyword,
+            String category,
             int page,
             int size,
             String sortBy,
@@ -216,10 +217,23 @@ public class ProductService {
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<Product> productPage =
-                (keyword != null && !keyword.isEmpty())
-                        ? productRepository.findByNameContainingIgnoreCase(keyword, pageable)
-                        : productRepository.findAll(pageable);
+        Page<Product> productPage;
+
+        boolean hasKeyword = keyword != null && !keyword.isEmpty();
+        boolean hasCategory = category != null && !category.isEmpty();
+
+        if (hasKeyword && hasCategory) {
+            productPage = productRepository
+                    .findByNameContainingIgnoreCaseAndCategory(keyword, category, pageable);
+        } else if (hasKeyword) {
+            productPage = productRepository
+                    .findByNameContainingIgnoreCase(keyword, pageable);
+        } else if (hasCategory) {
+            productPage = productRepository
+                    .findByCategory(category, pageable);
+        } else {
+            productPage = productRepository.findAll(pageable);
+        }
 
         return productPage.map(p ->
                 new ProductDTO(
@@ -234,6 +248,7 @@ public class ProductService {
                 )
         );
     }
+
 
     public Optional<Product> getProductById(Long id) {
         return productRepository.findById(id);

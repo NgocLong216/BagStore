@@ -36,7 +36,8 @@ public class SecurityConfig {
             "/static/**",
             "/api/auth/google",
             "/uploads/**",
-            "/api/momo/**"
+            "/api/momo/**",
+            "/api/contact/**"
     };
 
     @Bean

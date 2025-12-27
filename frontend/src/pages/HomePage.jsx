@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { FaShoppingCart } from "react-icons/fa";
 import { CheckCircle2 } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
+import { Link } from "react-router-dom";
+
 
 export default function HomePage({ user }) {
   const [products, setProducts] = useState([]);
@@ -12,12 +14,12 @@ export default function HomePage({ user }) {
     if (!p.imageUrl) {
       return "https://placehold.co/300x300?text=No+Image";
     }
-  
+
     // URL đầy đủ (cloud, http...)
     if (p.imageUrl.startsWith("http")) {
       return p.imageUrl;
     }
-  
+
     // Ảnh upload từ backend
     return `http://localhost:8080${p.imageUrl}`;
   };
@@ -146,20 +148,24 @@ export default function HomePage({ user }) {
         >
           <p>Ưu đãi đến 15%</p>
           <h2 className="text-2xl font-bold">Balo đi học</h2>
-          <button className="mt-3 px-5 py-2 border border-white rounded-full font-bold hover:bg-white hover:text-black transition">
-            Mua ngay
-          </button>
+          <Link to="/products?category=school">
+            <button className="mt-3 px-5 py-2 border border-white rounded-full font-bold hover:bg-white hover:text-black transition">
+              Mua ngay
+            </button>
+          </Link>
         </div>
 
         <div
           className="relative rounded-xl text-white p-5 bg-cover bg-center row-span-2"
-          style={{ backgroundImage: "url(https://res.cloudinary.com/ddtm7dvwo/image/upload/v1755658609/backpack-laptop-books-table-library_gczaqz.jpg)" }}
+          style={{ backgroundImage: "url(https://res.cloudinary.com/ddtm7dvwo/image/upload/v1766734179/cc5ddb1c-add1-4713-a881-a1c9e0617cf4.png)" }}
         >
           <p>Nhiều mẫu lựa chọn</p>
           <h2 className="text-2xl font-bold">Balo laptop – công sở</h2>
-          <button className="mt-3 px-5 py-2 border border-white rounded-full font-bold hover:bg-white hover:text-black transition">
-            Mua ngay
-          </button>
+          <Link to="/products?category=laptop">
+            <button className="mt-3 px-5 py-2 border border-white rounded-full font-bold hover:bg-white hover:text-black transition">
+              Mua ngay
+            </button>
+          </Link>
         </div>
 
         <div
@@ -168,9 +174,11 @@ export default function HomePage({ user }) {
         >
           <p>Đồng hành mọi chuyến đi</p>
           <h2 className="text-2xl font-bold">Balo du lịch – phượt</h2>
-          <button className="mt-3 px-5 py-2 border border-white rounded-full font-bold hover:bg-white hover:text-black transition">
-            Mua ngay
-          </button>
+          <Link to="/products?category=travel">
+            <button className="mt-3 px-5 py-2 border border-white rounded-full font-bold hover:bg-white hover:text-black transition">
+              Mua ngay
+            </button>
+          </Link>
         </div>
 
         <div
@@ -179,9 +187,11 @@ export default function HomePage({ user }) {
         >
           <p>Nhẹ nhàng & dễ thương</p>
           <h2 className="text-2xl font-bold">Balo trẻ em</h2>
-          <button className="mt-3 px-5 py-2 border border-white rounded-full font-bold hover:bg-white hover:text-black transition">
-            Mua ngay
-          </button>
+          <Link to="/products?category=kids">
+            <button className="mt-3 px-5 py-2 border border-white rounded-full font-bold hover:bg-white hover:text-black transition">
+              Mua ngay
+            </button>
+          </Link>
         </div>
       </section>
 
@@ -201,6 +211,13 @@ export default function HomePage({ user }) {
               key={p.productId} // chú ý backend trả về camelCase hoặc snake_case
               className="relative border border-[rgb(204,231,208)] rounded-xl shadow-sm p-4 hover:shadow-lg transition group "
             >
+              {/* Badge HẾT */}
+              {p.stock === 0 && (
+                <div className="absolute top-3 right-3 w-11 h-11 rounded-full bg-black text-white
+                  flex items-center justify-center text-sm font-semibold z-10">
+                  HẾT
+                </div>
+              )}
               <a href={`/product/${p.productId}`}>
                 <div className="flex justify-center items-center min-h-[250px]">
                   <img
@@ -230,15 +247,24 @@ export default function HomePage({ user }) {
                     <input type="hidden" name="quantity" value="1" />
                   </>
                 )}
+
                 <button
                   onClick={(e) => {
                     e.preventDefault();
+                    if (p.stock === 0) return;
                     addToCart(p.productId);
                   }}
-                  className="absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-[#e0a46e] text-white hover:bg-green-700 transition opacity-0 group-hover:opacity-100"
+                  disabled={p.stock === 0}
+                  className={`absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center
+                              rounded-full transition
+                              ${p.stock === 0
+                      ? "bg-gray-400 cursor-not-allowed opacity-60"
+                      : "bg-[#e0a46e] text-white hover:bg-green-700 opacity-0 group-hover:opacity-100"
+                    }`}
                 >
                   <FaShoppingCart />
                 </button>
+
               </form>
             </div>
           ))}
@@ -260,6 +286,13 @@ export default function HomePage({ user }) {
               key={p.productId} // chú ý backend trả về camelCase hoặc snake_case
               className="relative border border-[rgb(204,231,208)] rounded-xl shadow-sm p-4 hover:shadow-lg transition group bg-white"
             >
+              {/* Badge HẾT */}
+              {p.stock === 0 && (
+                <div className="absolute top-3 right-3 w-11 h-11 rounded-full bg-black text-white
+                  flex items-center justify-center text-sm font-semibold z-10">
+                  HẾT
+                </div>
+              )}
               <a href={`/product/${p.productId}`}>
                 <div className="flex justify-center items-center min-h-[250px]">
                   <img
@@ -292,12 +325,20 @@ export default function HomePage({ user }) {
                 <button
                   onClick={(e) => {
                     e.preventDefault();
+                    if (p.stock === 0) return;
                     addToCart(p.productId);
                   }}
-                  className="absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-[#e0a46e] text-white hover:bg-green-700 transition opacity-0 group-hover:opacity-100"
+                  disabled={p.stock === 0}
+                  className={`absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center
+                                rounded-full transition
+                                ${p.stock === 0
+                      ? "bg-gray-400 cursor-not-allowed opacity-60"
+                      : "bg-[#e0a46e] text-white hover:bg-green-700 opacity-0 group-hover:opacity-100"
+                    }`}
                 >
                   <FaShoppingCart />
                 </button>
+
               </form>
             </div>
           ))}

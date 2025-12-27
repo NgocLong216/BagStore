@@ -4,6 +4,7 @@ import { FaShoppingCart, FaShoppingBag, FaStar } from "react-icons/fa";
 import { useCart } from "../contexts/CartContext";
 import { CheckCircle2 } from "lucide-react";
 import ReviewPagination from "../components/Pagination";
+import { IoIosAlert } from "react-icons/io";
 
 
 export default function ProductInfoPage({ user }) {
@@ -34,14 +35,14 @@ export default function ProductInfoPage({ user }) {
 
     const resolveImageUrl = (url) => {
         if (!url) return "/images/default.jpg";
-      
+
         // URL đầy đủ
         if (url.startsWith("http")) return url;
-      
+
         // Ảnh upload từ backend
         return `http://localhost:8080${url}`;
-      };
-      
+    };
+
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -322,25 +323,37 @@ export default function ProductInfoPage({ user }) {
                         </span>
                     </div>
 
-                    <div className="flex gap-4 mb-6">
+                    {product.stock === 0 ? (
                         <button
-                            onClick={() => addToCart(product.productId)}
-                            className="flex items-center gap-2 bg-green-700 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-900 transition"
+                            className="flex items-center gap-2 border border-gray-500 bg-white-100 text-gray-500 px-6 py-3 rounded-lg font-bold hover:bg-gray-100 transition"
                         >
-                            Thêm vào giỏ hàng
-                            <FaShoppingCart />
+                            Tạm hết hàng
+                            <IoIosAlert />
                         </button>
+                    ) : (
+                        <div className="flex gap-4 mb-6">
+
+                            <button
+                                onClick={() => addToCart(product.productId)}
+                                className="flex items-center gap-2 bg-green-700 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-900 transition"
+                            >
+                                Thêm vào giỏ hàng
+                                <FaShoppingCart />
+                            </button>
 
 
-                        <button
-                            onClick={handleBuyNow}
-                            className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-800 transition"
-                        >
-                            Mua ngay
-                            <FaShoppingBag />
-                        </button>
 
-                    </div>
+                            <button
+                                onClick={handleBuyNow}
+                                className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-800 transition"
+                            >
+                                Mua ngay
+                                <FaShoppingBag />
+                            </button>
+
+
+                        </div>
+                    )}
 
                     {specs.length > 0 && (
                         <ul className="text-gray-600 space-y-2">
@@ -513,6 +526,14 @@ export default function ProductInfoPage({ user }) {
                             key={rec.productId}
                             className="relative border border-[rgb(204,231,208)] rounded-xl shadow-sm p-4 hover:shadow-lg transition group "
                         >
+                            {/* Badge HẾT */}
+                            {rec.stock === 0 && (
+                                <div className="absolute top-3 right-3 w-11 h-11 rounded-full bg-black text-white
+                                    flex items-center justify-center text-sm font-semibold z-10">
+                                    HẾT
+                                </div>
+                            )}
+
                             <a href={`/product/${rec.productId}`}>
                                 <div className="flex justify-center items-center min-h-[250px]">
                                     <img
@@ -528,6 +549,7 @@ export default function ProductInfoPage({ user }) {
                                     </h4>
                                 </div>
                             </a>
+
 
                             {/* Add to cart */}
                             <form
@@ -545,9 +567,16 @@ export default function ProductInfoPage({ user }) {
                                 <button
                                     onClick={(e) => {
                                         e.preventDefault();
-                                        addToCart(rec.productId, 1);
+                                        if (rec.stock === 0) return;
+                                        addToCart(rec.productId);
                                     }}
-                                    className="absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-[#e0a46e] text-white hover:bg-green-700 transition opacity-0 group-hover:opacity-100"
+                                    disabled={rec.stock === 0}
+                                    className={`absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center
+                                rounded-full transition
+                                ${rec.stock === 0
+                                            ? "bg-gray-400 cursor-not-allowed opacity-60"
+                                            : "bg-[#e0a46e] text-white hover:bg-green-700 opacity-0 group-hover:opacity-100"
+                                        }`}
                                 >
                                     <FaShoppingCart />
                                 </button>

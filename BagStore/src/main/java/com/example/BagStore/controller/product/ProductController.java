@@ -39,15 +39,17 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<Page<ProductDTO>> getProducts(
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String order
     ) {
         return ResponseEntity.ok(
-                productService.getProducts(keyword, page, size, sortBy, order)
+                productService.getProducts(keyword, category, page, size, sortBy, order)
         );
     }
+
 
 
     @GetMapping("/{id}")

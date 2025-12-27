@@ -1,6 +1,47 @@
 import { FaMapMarkerAlt, FaCalendar, FaPhone, FaEnvelope } from "react-icons/fa";
+import { useState } from "react";
+
 
 export default function ContactPage() {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+  const [errors, setErrors] = useState({});
+
+
+  const handleSubmit = async () => {
+    setErrors({});
+    setSuccess(false);
+
+    try {
+      const res = await fetch("http://localhost:8080/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json(); //  QUAN TRỌNG
+        setErrors(errorData.errors || {});
+
+        return;
+      }
+
+      setSuccess(true);
+      setForm({ name: "", email: "", phone: "", message: "" });
+    } catch (err) {
+      setErrors({ global: "Không thể gửi liên hệ" });
+    }
+  };
+
+
   return (
     <div className="bg-[#fff8f2]">
       {/* Banner */}
@@ -88,33 +129,96 @@ export default function ContactPage() {
 
         {/* Right */}
         <div className="w-full md:w-[45%] bg-[#2d5f2c] p-8 rounded-2xl text-white mt-8 md:mt-0">
-          <h3 className="text-2xl mb-5">Gửi thắc mắc cho chúng tôi</h3>
-          <input
-            type="text"
-            placeholder="Tên của bạn"
-            className="w-full p-3 mt-2 rounded-lg text-black bg-white"
-          />
-          <div className="flex gap-3 mt-2">
+          <h3 className="text-2xl mb-6">Gửi thắc mắc cho chúng tôi</h3>
+
+          {/* Name */}
+          <div className="mb-4">
             <input
-              type="email"
-              placeholder="Email của bạn"
-              className="flex-1 p-3 rounded-lg text-black bg-white"
+              type="text"
+              placeholder="Tên của bạn"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full p-3 mt-2 rounded-lg text-black bg-white"
             />
-            <input
-              type="tel"
-              placeholder="Số điện thoại của bạn"
-              className="flex-1 p-3 rounded-lg text-black bg-white"
-            />
+            {errors.name && (
+              <p className="text-red-300 text-sm mt-1">{errors.name}</p>
+            )}
+
+
           </div>
-          <textarea
-            rows="5"
-            placeholder="Nội dung"
-            className="w-full p-3 mt-2 rounded-lg text-black bg-white"
-          ></textarea>
-          <button className="mt-5 w-full bg-[#d4a373] hover:bg-green-700 text-white p-3 rounded-lg">
-            Gửi cho chúng tôi
+
+          {/* Email & Phone */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* Email */}
+            <div>
+              <input
+                type="email"
+                placeholder="Email của bạn"
+                value={form.email}
+                onChange={(e) => {
+                  setForm({ ...form, email: e.target.value });
+                  setErrors({ ...errors, email: "" });
+                }}
+                className={`w-full p-3 rounded-lg text-black bg-white border 
+          ${errors.email ? "border-red-500" : "border-gray-300"}`}
+              />
+              {errors.email && (
+                <p className="text-red-300 text-sm mt-1">{errors.email}</p>
+              )}
+            </div>
+
+            {/* Phone */}
+            <div>
+              <input
+                type="tel"
+                placeholder="Số điện thoại của bạn"
+                value={form.phone}
+                onChange={(e) => {
+                  setForm({ ...form, phone: e.target.value });
+                  setErrors({ ...errors, phone: "" });
+                }}
+                className={`w-full p-3 rounded-lg text-black bg-white border 
+          ${errors.phone ? "border-red-500" : "border-gray-300"}`}
+              />
+              {errors.phone && (
+                <p className="text-red-300 text-sm mt-1">{errors.phone}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Message */}
+          <div className="mb-4">
+            <textarea
+              rows="5"
+              placeholder="Nội dung"
+              value={form.message}
+              onChange={(e) => {
+                setForm({ ...form, message: e.target.value });
+                setErrors({ ...errors, message: "" });
+              }}
+              className={`w-full p-3 rounded-lg text-black bg-white border 
+        ${errors.message ? "border-red-500" : "border-gray-300"}`}
+            />
+            {errors.message && (
+              <p className="text-red-300 text-sm mt-1">{errors.message}</p>
+            )}
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="w-full bg-[#d4a373] hover:bg-green-700 text-white p-3 rounded-lg font-semibold disabled:opacity-60 transition"
+          >
+            {loading ? "Đang gửi..." : "Gửi cho chúng tôi"}
           </button>
+
+          {success && (
+            <p className="mt-3 text-green-300 text-sm text-center">
+              Gửi liên hệ thành công! Chúng tôi sẽ phản hồi sớm.
+            </p>
+          )}
         </div>
+
       </section>
 
       {/* Map */}
