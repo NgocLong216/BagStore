@@ -83,6 +83,8 @@ public class DashboardService {
                     return new TopProductDTO(
                             p.getProductId(),
                             p.getName(),
+                            p.getPrice(),
+                            p.getStock(),
                             imageUrl,
                             entry.getValue()
                     );

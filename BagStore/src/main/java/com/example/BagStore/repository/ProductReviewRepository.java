@@ -12,5 +12,7 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, Lo
     Page<ProductReview> findByProductId(Long productId, Pageable pageable);
 
     List<ProductReview> findAllByProductId(Long productId);
+
+    boolean existsByProductIdAndUserId(Long productId, Integer userId);
 }
 

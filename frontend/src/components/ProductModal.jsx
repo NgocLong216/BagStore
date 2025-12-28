@@ -207,7 +207,7 @@ export default function ProductModal({
                             placeholder="Mô tả chi tiết"
                             value={product.detail}
                             onChange={e => setProduct({ ...product, detail: e.target.value })}
-                            className="w-full pl-10 pr-4 py-3 bg-gray-200 rounded resize-none outline-none"
+                            className="w-full pl-10 pr-4 py-3 bg-gray-200 rounded outline-none"
                         />
                     </div>
 

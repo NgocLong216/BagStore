@@ -9,6 +9,7 @@ export default function HomePage({ user }) {
   const [products, setProducts] = useState([]);
   const { cartCount, setCartCount } = useCart();
   const [showToast, setShowToast] = useState(false);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
 
   const getProductImage = (p) => {
     if (!p.imageUrl) {
@@ -29,6 +30,13 @@ export default function HomePage({ user }) {
       .then((res) => res.json())
       .then((data) => setProducts(data))
       .catch((err) => console.error("Error fetching products:", err));
+  }, []);
+
+  useEffect(() => {
+    fetch("http://localhost:8080/api/products/top-selling")
+      .then(res => res.json())
+      .then(data => setFeaturedProducts(data))
+      .catch(err => console.error(err));
   }, []);
 
 
@@ -206,7 +214,7 @@ export default function HomePage({ user }) {
         </p>
 
         <div className="max-w-6xl mx-auto grid gap-6 mt-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 ">
-          {products.map((p) => (
+          {featuredProducts.map((p) => (
             <div
               key={p.productId} // chú ý backend trả về camelCase hoặc snake_case
               className="relative border border-[rgb(204,231,208)] rounded-xl shadow-sm p-4 hover:shadow-lg transition group "
@@ -273,11 +281,10 @@ export default function HomePage({ user }) {
 
       <section id="discount-products" className="mx-auto p-10 border-b border-gray-200 text-center bg-gradient-to-r from-[#2c5f46] to-[#2c5f2d] pt-20">
         <h1 className="my-8 text-3xl uppercase font-bold bg-white bg-clip-text text-transparent">
-          Sản Phẩm Khuyến Mãi
+        Sản Phẩm Mới
         </h1>
         <p className="text-white max-w-2xl mx-auto">
-          Săn ngay những mẫu balo hot nhất với mức giá ưu đãi đặc biệt, chỉ có trong
-          thời gian khuyến mãi!
+        Khám phá những mẫu balo mới nhất vừa cập bến, thiết kế hiện đại và chất lượng vượt trội!
         </p>
 
         <div className="max-w-6xl mx-auto grid gap-6 mt-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 ">

@@ -51,18 +51,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Missing or invalid Authorization header");
+            filterChain.doFilter(request, response);
             return;
         }
+
 
         String token = authHeader.substring(7);
 
         if (!jwtUtil.validateToken(token)) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Invalid or expired token");
+            filterChain.doFilter(request, response);
             return;
         }
+
 
         Claims claims = jwtUtil.getClaims(token);
 
@@ -93,4 +93,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+
 }

@@ -1,13 +1,8 @@
 package com.example.BagStore.service;
 
 import com.example.BagStore.dto.*;
-import com.example.BagStore.entity.Product;
-import com.example.BagStore.entity.ProductImage;
-import com.example.BagStore.entity.ProductSpecification;
-import com.example.BagStore.repository.CartRepository;
-import com.example.BagStore.repository.ProductImageRepository;
-import com.example.BagStore.repository.ProductRepository;
-import com.example.BagStore.repository.ProductSpecificationRepository;
+import com.example.BagStore.entity.*;
+import com.example.BagStore.repository.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -23,7 +18,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -45,6 +42,9 @@ public class ProductService {
 
     @Autowired
     private CartRepository cartRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
 
     public List<ProductDTO> getTop4Products() {
         return productRepository.findTop4ByOrderByCreatedAtDesc()
@@ -247,6 +247,48 @@ public class ProductService {
                         p.getStock()
                 )
         );
+    }
+
+    public List<TopProductDTO> getTopSellingProducts(int limit) {
+
+        List<Order> completedOrders =
+                orderRepository.findByStatus("COMPLETED");
+
+        Map<Product, Long> productSoldMap = new HashMap<>();
+
+        for (Order order : completedOrders) {
+            for (OrderItem item : order.getItems()) {
+
+                Product product = item.getProduct();
+                long quantity = item.getQuantity();
+
+                productSoldMap.put(
+                        product,
+                        productSoldMap.getOrDefault(product, 0L) + quantity
+                );
+            }
+        }
+
+        return productSoldMap.entrySet().stream()
+                .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+                .limit(limit)
+                .map(entry -> {
+                    Product p = entry.getKey();
+
+                    String imageUrl = p.getImages().isEmpty()
+                            ? null
+                            : p.getImages().get(0).getImageUrl();
+
+                    return new TopProductDTO(
+                            p.getProductId(),
+                            p.getName(),
+                            p.getPrice(),
+                            p.getStock(),
+                            imageUrl,
+                            entry.getValue()
+                    );
+                })
+                .toList();
     }
 
 

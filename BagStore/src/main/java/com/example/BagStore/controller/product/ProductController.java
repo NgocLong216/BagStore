@@ -1,19 +1,21 @@
 package com.example.BagStore.controller.product;
 
-import com.example.BagStore.dto.ProductDetailDTO;
-import com.example.BagStore.dto.ProductReviewDTO;
-import com.example.BagStore.dto.ProductDTO;
-import com.example.BagStore.dto.ReviewStatsDTO;
+import com.example.BagStore.dto.*;
 import com.example.BagStore.entity.Product;
 import com.example.BagStore.entity.ProductImage;
 import com.example.BagStore.entity.ProductReview;
+import com.example.BagStore.security.CustomUserDetails;
 import com.example.BagStore.service.ProductImageService;
 import com.example.BagStore.service.ProductReviewService;
 import com.example.BagStore.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -99,6 +101,30 @@ public class ProductController {
     public List<ProductImage> getImages(@PathVariable Long productId) {
         return imageService.getImagesByProduct(productId);
     }
+
+    @PostMapping("/{id}/reviews")
+    public ResponseEntity<?> addReview(
+            @PathVariable Long id,
+            @RequestBody ProductReview req,
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        reviewService.addReview(
+                id,
+                user.getUser().getUserId(),
+                req
+        );
+
+        return ResponseEntity.ok("Đã thêm đánh giá");
+    }
+
+    @GetMapping("/top-selling")
+    public List<TopProductDTO> topProducts(
+            @RequestParam(defaultValue = "4") int limit
+    ) {
+        return productService.getTopSellingProducts(limit);
+    }
+
+
 
 }
 

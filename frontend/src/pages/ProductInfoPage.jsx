@@ -5,6 +5,7 @@ import { useCart } from "../contexts/CartContext";
 import { CheckCircle2 } from "lucide-react";
 import ReviewPagination from "../components/Pagination";
 import { IoIosAlert } from "react-icons/io";
+import ReviewInput from "../components/ReviewInput";
 
 
 export default function ProductInfoPage({ user }) {
@@ -33,6 +34,8 @@ export default function ProductInfoPage({ user }) {
     const [images, setImages] = useState([]);
     const [activeImage, setActiveImage] = useState("");
 
+    
+
     const resolveImageUrl = (url) => {
         if (!url) return "/images/default.jpg";
 
@@ -43,6 +46,7 @@ export default function ProductInfoPage({ user }) {
         return `http://localhost:8080${url}`;
     };
 
+    
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -82,7 +86,7 @@ export default function ProductInfoPage({ user }) {
 
                 }
 
-                // 3️⃣ Recommend
+                // 3️ Recommend
                 const recRes = await fetch(
                     `http://localhost:8080/api/products/${id}/recommend`
                 );
@@ -99,6 +103,8 @@ export default function ProductInfoPage({ user }) {
 
         fetchProduct();
     }, [id]);
+
+    
 
     // Mua ngay
     const handleBuyNow = () => {
@@ -135,7 +141,7 @@ export default function ProductInfoPage({ user }) {
 
     const fetchReviews = async () => {
         try {
-            // 1️⃣ Lấy review theo trang
+            // 1️ Lấy review theo trang
             const resPage = await fetch(
                 `http://localhost:8080/api/products/${id}/reviews?page=${reviewPage}&size=${reviewSize}`
             );
@@ -144,7 +150,7 @@ export default function ProductInfoPage({ user }) {
             setReviews(dataPage.content);
             setReviewTotalPages(dataPage.totalPages);
 
-            // 2️⃣ Lấy tổng review + trung bình rating
+            // 2️ Lấy tổng review + trung bình rating
             const resStats = await fetch(`http://localhost:8080/api/products/${id}/reviews/stats`);
             if (!resStats.ok) throw new Error("Không lấy được thống kê đánh giá");
             const stats = await resStats.json();
@@ -163,38 +169,29 @@ export default function ProductInfoPage({ user }) {
         fetchReviews();
     }, [id, reviewPage]);
 
-    const addReview = async (e) => {
-        e.preventDefault();
+    const addReview = async ({ rating, comment }) => {
         const token = localStorage.getItem("token");
+
         if (!token) {
-            window.location.href = "/login";
+            navigate("/login");
             return;
         }
-
-        try {
-            const res = await fetch(`http://localhost:8080/api/products/${id}/reviews`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    userId: user.user_id,
-                    rating: newRating,
-                    comment: newComment,
-                }),
-            });
-
-            if (!res.ok) throw new Error("Không thể thêm đánh giá");
-            setNewComment("");
-            setNewRating(5);
-            fetchReviews(); // reload review
-            alert("Đã thêm đánh giá!");
-        } catch (err) {
-            console.error(err);
-            alert(err.message);
-        }
+    
+        await fetch(`http://localhost:8080/api/products/${id}/reviews`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                rating,
+                comment,
+            }),
+        });
+    
+        fetchReviews();
     };
+    
 
     // ================== CART ==================
 
@@ -369,7 +366,7 @@ export default function ProductInfoPage({ user }) {
 
             {/* Tabs */}
             <div className="mt-12 ml-36 mr-36">
-                <div className="flex border-b">
+                <div className="flex border-b border-gray-300">
                     {["details", "reviews", "policy"].map((tab) => (
                         <button
                             key={tab}
@@ -476,33 +473,17 @@ export default function ProductInfoPage({ user }) {
 
                             {/* Form thêm review */}
                             {user && (
-                                <form onSubmit={addReview} className="mt-4 flex flex-col gap-2">
-                                    <label>
-                                        Rating:
-                                        <select
-                                            value={newRating}
-                                            onChange={(e) => setNewRating(+e.target.value)}
-                                            className="ml-2 border px-2 rounded"
-                                        >
-                                            {[5, 4, 3, 2, 1].map((r) => (
-                                                <option key={r} value={r}>{r}</option>
-                                            ))}
-                                        </select>
-                                    </label>
-                                    <label>
-                                        Comment:
-                                        <textarea
-                                            value={newComment}
-                                            onChange={(e) => setNewComment(e.target.value)}
-                                            rows={3}
-                                            className="w-full border rounded px-2 py-1"
-                                        />
-                                    </label>
-                                    <button type="submit" className="bg-green-700 text-white px-4 py-2 rounded hover:bg-black transition">
-                                        Gửi đánh giá
-                                    </button>
-                                </form>
+                                <ReviewInput
+                                    user={user}
+                                    onSubmit={({ rating, comment }) => {
+                                        addReview({
+                                            rating,
+                                            comment
+                                        });
+                                    }}
+                                />
                             )}
+
                         </div>
                     )}
 

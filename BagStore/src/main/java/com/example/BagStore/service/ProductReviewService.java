@@ -2,15 +2,18 @@ package com.example.BagStore.service;
 
 import com.example.BagStore.dto.ProductReviewDTO;
 import com.example.BagStore.dto.ReviewStatsDTO;
-import com.example.BagStore.entity.ProductReview;
-import com.example.BagStore.entity.User;
+import com.example.BagStore.dto.TopProductDTO;
+import com.example.BagStore.entity.*;
+import com.example.BagStore.repository.OrderRepository;
 import com.example.BagStore.repository.ProductReviewRepository;
 import com.example.BagStore.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ProductReviewService {
@@ -20,6 +23,9 @@ public class ProductReviewService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
 
     public Page<ProductReviewDTO> getReviewsByProductId(Long productId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
@@ -58,5 +64,28 @@ public class ProductReviewService {
                 .averageRating(Math.round(averageRating * 10.0) / 10.0) // làm tròn 1 chữ số thập phân
                 .build();
     }
+
+    public void addReview(Long productId, Integer userId, ProductReview req) {
+
+        if (req.getRating() == null || req.getRating() < 1 || req.getRating() > 5) {
+            throw new RuntimeException("Rating không hợp lệ");
+        }
+
+        if (reviewRepository.existsByProductIdAndUserId(productId, userId)) {
+            throw new RuntimeException("Bạn đã đánh giá sản phẩm này");
+        }
+
+        ProductReview review = ProductReview.builder()
+                .productId(productId)
+                .userId(userId)
+                .rating(req.getRating())
+                .comment(req.getComment())
+                .build();
+
+        reviewRepository.save(review);
+    }
+
+
+
 }
 
