@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import { FaEdit, FaTrash, FaThumbtack, FaPlus } from "react-icons/fa";
 
+
 export default function AddressPage() {
   const API_URL = "http://localhost:8080/api/contacts";
 
@@ -15,6 +16,18 @@ export default function AddressPage() {
     address: "",
     isDefault: false,
   });
+
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState(""); // "delete" | "success"
+  const [modalMessage, setModalMessage] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
+
+  useEffect(() => {
+    document.body.style.overflow = showModal ? "hidden" : "auto";
+    return () => (document.body.style.overflow = "auto");
+  }, [showModal]);
+
+
 
   // Lấy dữ liệu từ backend
   useEffect(() => {
@@ -76,30 +89,48 @@ export default function AddressPage() {
           .then((res) => res.json())
           .then((data) => setUserContacts(data));
       })
-      .finally(() => setShowPopup(false));
+      .finally(() => {
+        setShowPopup(false);
+        setModalType("success");
+        setModalMessage("Lưu địa chỉ thành công!");
+        setShowModal(true);
+      });
+
   };
 
 
   // Xóa địa chỉ
   const handleDelete = (id) => {
-    const token = localStorage.getItem("token");
-    if (confirm("Bạn có chắc chắn muốn xóa địa chỉ này?")) {
-      fetch(`${API_URL}/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error("Xóa thất bại");
-          }
-          // Xóa khỏi state để UI update ngay
-          setUserContacts((prev) => prev.filter((c) => c.contactId !== id));
-        })
-        .catch((err) => console.error(err));
-    }
+    setSelectedId(id);
+    setModalType("delete");
+    setModalMessage("Bạn có chắc chắn muốn xóa địa chỉ này?");
+    setShowModal(true);
   };
+
+  const confirmDelete = () => {
+    const token = localStorage.getItem("token");
+
+    fetch(`${API_URL}/${selectedId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Xóa thất bại");
+        setUserContacts((prev) =>
+          prev.filter((c) => c.contactId !== selectedId)
+        );
+        setModalType("success");
+        setModalMessage("Xóa địa chỉ thành công!");
+      })
+      .catch(() => {
+        setModalType("success");
+        setModalMessage("Có lỗi xảy ra khi xóa!");
+      });
+  };
+
+
 
   // Cập nhật mặc định
   const handleSetDefault = (id) => {
@@ -303,6 +334,48 @@ export default function AddressPage() {
           ></div>
         </>
       )}
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-96 p-6 text-center animate-fadeIn">
+            <h2
+              className={`text-xl font-bold mb-3 ${modalType === "delete" ? "text-red-600" : "text-green-700"
+                }`}
+            >
+              {modalType === "delete" ? "Xác nhận" : "Thành công"}
+            </h2>
+
+            <p className="text-gray-600 mb-6">{modalMessage}</p>
+
+            <div className="flex justify-center gap-4">
+              {modalType === "delete" ? (
+                <>
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="px-5 py-2 rounded-lg border hover:bg-black hover:text-white"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    className="px-5 py-2 rounded-lg bg-red-600 text-white hover:bg-black"
+                  >
+                    Xóa
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="px-6 py-2 rounded-lg bg-green-800 text-white hover:bg-black"
+                >
+                  Đóng
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

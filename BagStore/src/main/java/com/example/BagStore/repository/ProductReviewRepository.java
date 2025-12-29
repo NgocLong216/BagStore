@@ -14,5 +14,7 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, Lo
     List<ProductReview> findAllByProductId(Long productId);
 
     boolean existsByProductIdAndUserId(Long productId, Integer userId);
+
+    void deleteByUser_UserId(Integer userId);
 }
 

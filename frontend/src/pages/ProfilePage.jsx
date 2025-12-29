@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { FaUser, FaEnvelope, FaPhone } from "react-icons/fa";
 import Sidebar from "../components/Sidebar";
 
+
 export default function ProfilePage() {
   const [formData, setFormData] = useState({
     username: "",
@@ -10,6 +11,21 @@ export default function ProfilePage() {
   });
 
   const [avatar, setAvatar] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+
+  useEffect(() => {
+    if (showModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    // Cleanup khi unmount
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [showModal]);
 
 
   useEffect(() => {
@@ -67,7 +83,9 @@ export default function ProfilePage() {
         phone: updatedUser.phone || ""
       });
 
-      alert("Cập nhật thành công!");
+      setModalMessage("Cập nhật hồ sơ thành công!");
+      setShowModal(true);
+
     } catch (err) {
       console.error("Update error:", err);
     }
@@ -98,7 +116,9 @@ export default function ProfilePage() {
     saved.avatar = imageUrl;
     localStorage.setItem("user", JSON.stringify(saved));
 
-    alert("Upload avatar thành công!");
+    setModalMessage("Upload avatar thành công!");
+    setShowModal(true);
+
   };
 
 
@@ -174,7 +194,7 @@ export default function ProfilePage() {
                     : `http://localhost:8080${avatar}`
                   : "https://hanoidep.vn/wp-content/uploads/2025/11/avatar-trang-4.webp"
               }
-              
+
               alt="avatar"
               onError={(e) => {
                 e.currentTarget.src = "https://hanoidep.vn/wp-content/uploads/2025/11/avatar-trang-4.webp";
@@ -198,6 +218,28 @@ export default function ProfilePage() {
           </div>
         </main>
       </div>
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-lg w-96 p-6 text-center animate-fadeIn">
+            <h2 className="text-xl font-bold mb-2 text-green-700">
+              Thành công
+            </h2>
+
+            <p className="text-gray-600 mb-6">
+              {modalMessage}
+            </p>
+
+            <button
+              onClick={() => setShowModal(false)}
+              className="px-6 py-2 bg-green-800 text-white rounded-lg hover:bg-black transition"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

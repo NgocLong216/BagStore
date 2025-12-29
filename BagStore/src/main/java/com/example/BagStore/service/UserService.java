@@ -6,8 +6,12 @@ import com.example.BagStore.dto.UserResponse;
 import com.example.BagStore.dto.UserUpdateRequest;
 import com.example.BagStore.entity.User;
 import com.example.BagStore.enums.Role;
+import com.example.BagStore.repository.OrderRepository;
+import com.example.BagStore.repository.ProductReviewRepository;
+import com.example.BagStore.repository.UserContactRepository;
 import com.example.BagStore.repository.UserRepository;
 import com.example.BagStore.security.CustomUserDetails;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.BeanDefinitionDsl;
@@ -33,6 +37,15 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UserContactRepository userContactRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private ProductReviewRepository reviewRepository;
 
     public UserResponse getCurrentUser(Authentication authentication) {
         if (authentication == null || authentication.getPrincipal() == null) {
@@ -176,19 +189,19 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User không tồn tại"));
 
-        // ❌ Không cho admin tự hạ role
+        //  Không cho admin tự hạ role
         if (admin.getUserId().equals(userId)
                 && !admin.getRole().equals(req.getRole())) {
             throw new RuntimeException("Không thể thay đổi vai trò của chính bạn");
         }
 
-        // ❌ Check trùng username
+        //  Check trùng username
         if (!user.getUsername().equals(req.getUsername())
                 && userRepository.existsByUsername(req.getUsername())) {
             throw new RuntimeException("Username đã tồn tại");
         }
 
-        // ❌ Check trùng email
+        //  Check trùng email
         if (!user.getEmail().equals(req.getEmail())
                 && userRepository.existsByEmail(req.getEmail())) {
             throw new RuntimeException("Email đã tồn tại");
@@ -202,6 +215,22 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Transactional
+    public void deleteUserByUsername(String username) {
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
+
+        Integer userId = user.getUserId();
+
+        // 1️ Xóa dữ liệu liên quan (nếu không cascade)
+        userContactRepository.deleteByUser_UserId(userId);
+        reviewRepository.deleteByUser_UserId(userId);
+        orderRepository.deleteByUserId(userId);
+
+        // 2 Xóa user
+        userRepository.delete(user);
+    }
 
 }
 

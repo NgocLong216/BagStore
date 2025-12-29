@@ -204,6 +204,79 @@ export default function HomePage({ user }) {
       </section>
 
       {/* Product */}
+      <section id="discount-products" className="mx-auto p-10 border-b border-gray-200 text-center bg-gradient-to-r from-[#2c5f46] to-[#2c5f2d] pt-20">
+        <h1 className="my-8 text-3xl uppercase font-bold bg-white bg-clip-text text-transparent">
+        Sản Phẩm Mới
+        </h1>
+        <p className="text-white max-w-2xl mx-auto">
+        Khám phá những mẫu balo mới nhất vừa cập bến, thiết kế hiện đại và chất lượng vượt trội!
+        </p>
+
+        <div className="max-w-6xl mx-auto grid gap-6 mt-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 ">
+          {products.map((p) => (
+            <div
+              key={p.productId} // chú ý backend trả về camelCase hoặc snake_case
+              className="relative border border-[rgb(204,231,208)] rounded-xl shadow-sm p-4 hover:shadow-lg transition group bg-white"
+            >
+              {/* Badge HẾT */}
+              {p.stock === 0 && (
+                <div className="absolute top-3 right-3 w-11 h-11 rounded-full bg-black text-white
+                  flex items-center justify-center text-sm font-semibold z-10">
+                  HẾT
+                </div>
+              )}
+              <a href={`/product/${p.productId}`}>
+                <div className="flex justify-center items-center min-h-[250px]">
+                  <img
+                    src={getProductImage(p)}
+                    alt={p.name}
+                    className="h-[230px] rounded-xl transition-transform duration-300 hover:scale-110"
+                  />
+                </div>
+                <div className="text-left py-3">
+                  <h5 className="text-sm text-[#01213A]">{p.name}</h5>
+                  <h4 className="text-[#088178] font-bold">
+                    {p.price.toLocaleString()} ₫
+                  </h4>
+                </div>
+              </a>
+
+              {/* Add to cart */}
+              <form
+                action={user ? "/cart" : "/login"}
+                method="POST"
+                className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition"
+              >
+                {user && (
+                  <>
+                    <input type="hidden" name="user_id" value={user.user_id} />
+                    <input type="hidden" name="product_id" value={p.productId} />
+                    <input type="hidden" name="quantity" value="1" />
+                  </>
+                )}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (p.stock === 0) return;
+                    addToCart(p.productId);
+                  }}
+                  disabled={p.stock === 0}
+                  className={`absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center
+                                rounded-full transition
+                                ${p.stock === 0
+                      ? "bg-gray-400 cursor-not-allowed opacity-60"
+                      : "bg-[#e0a46e] text-white hover:bg-green-700 opacity-0 group-hover:opacity-100"
+                    }`}
+                >
+                  <FaShoppingCart />
+                </button>
+
+              </form>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section id="featured-products" className="p-10 text-center pt-20">
         <h1 className="my-8 text-3xl uppercase font-bold bg-gradient-to-r from-[#2c5f46] to-[#2c5f2d] bg-clip-text text-transparent">
           Sản Phẩm Nổi Bật
@@ -279,81 +352,8 @@ export default function HomePage({ user }) {
         </div>
       </section>
 
-      <section id="discount-products" className="mx-auto p-10 border-b border-gray-200 text-center bg-gradient-to-r from-[#2c5f46] to-[#2c5f2d] pt-20">
-        <h1 className="my-8 text-3xl uppercase font-bold bg-white bg-clip-text text-transparent">
-        Sản Phẩm Mới
-        </h1>
-        <p className="text-white max-w-2xl mx-auto">
-        Khám phá những mẫu balo mới nhất vừa cập bến, thiết kế hiện đại và chất lượng vượt trội!
-        </p>
-
-        <div className="max-w-6xl mx-auto grid gap-6 mt-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 ">
-          {products.map((p) => (
-            <div
-              key={p.productId} // chú ý backend trả về camelCase hoặc snake_case
-              className="relative border border-[rgb(204,231,208)] rounded-xl shadow-sm p-4 hover:shadow-lg transition group bg-white"
-            >
-              {/* Badge HẾT */}
-              {p.stock === 0 && (
-                <div className="absolute top-3 right-3 w-11 h-11 rounded-full bg-black text-white
-                  flex items-center justify-center text-sm font-semibold z-10">
-                  HẾT
-                </div>
-              )}
-              <a href={`/product/${p.productId}`}>
-                <div className="flex justify-center items-center min-h-[250px]">
-                  <img
-                    src={getProductImage(p)}
-                    alt={p.name}
-                    className="h-[230px] rounded-xl transition-transform duration-300 hover:scale-110"
-                  />
-                </div>
-                <div className="text-left py-3">
-                  <h5 className="text-sm text-[#01213A]">{p.name}</h5>
-                  <h4 className="text-[#088178] font-bold">
-                    {p.price.toLocaleString()} ₫
-                  </h4>
-                </div>
-              </a>
-
-              {/* Add to cart */}
-              <form
-                action={user ? "/cart" : "/login"}
-                method="POST"
-                className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition"
-              >
-                {user && (
-                  <>
-                    <input type="hidden" name="user_id" value={user.user_id} />
-                    <input type="hidden" name="product_id" value={p.productId} />
-                    <input type="hidden" name="quantity" value="1" />
-                  </>
-                )}
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (p.stock === 0) return;
-                    addToCart(p.productId);
-                  }}
-                  disabled={p.stock === 0}
-                  className={`absolute bottom-4 right-4 w-10 h-10 flex items-center justify-center
-                                rounded-full transition
-                                ${p.stock === 0
-                      ? "bg-gray-400 cursor-not-allowed opacity-60"
-                      : "bg-[#e0a46e] text-white hover:bg-green-700 opacity-0 group-hover:opacity-100"
-                    }`}
-                >
-                  <FaShoppingCart />
-                </button>
-
-              </form>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Blog */}
-      <section className="max-w-6xl mx-auto p-10 text-center">
+      {/* <section className="max-w-6xl mx-auto p-10 text-center">
         <h1 className="my-8 text-3xl uppercase font-bold bg-gradient-to-r from-[#2c5f46] to-[#2c5f2d] bg-clip-text text-transparent">
           Bài Viết Mới
         </h1>
@@ -402,7 +402,7 @@ export default function HomePage({ user }) {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
       {showToast && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           {/* Overlay mờ */}

@@ -1,23 +1,50 @@
-import { useState } from "react";
 import Sidebar from "../components/Sidebar";
+import { useState, useEffect } from "react";
+import { FaTrash } from "react-icons/fa";
 
 export default function SettingPage() {
-  const [language, setLanguage] = useState("vi");
-  const [emailNotify, setEmailNotify] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
 
-  const handleSave = (e) => {
-    e.preventDefault();
-    console.log({
-      language,
-      emailNotify,
-      darkMode,
-    });
-    alert("Cập nhật thiết lập thành công!");
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    setLoading(true);
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch("http://localhost:8080/api/users/me", {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Delete failed");
+
+      // Clear local data
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
+      // Redirect về login / home
+      window.location.href = "/login";
+    } catch (err) {
+      alert("Có lỗi xảy ra khi xóa tài khoản");
+    } finally {
+      setLoading(false);
+      setShowModal(false);
+    }
   };
 
+
+
+  useEffect(() => {
+    document.body.style.overflow = showModal ? "hidden" : "auto";
+    return () => (document.body.style.overflow = "auto");
+  }, [showModal]);
+
+
   return (
-    <div className={`min-h-screen ${darkMode ? "bg-gray-900" : "bg-[#fff8f2]"} pt-6`}>
+    <div className="min-h-screen bg-[#fff8f2] pt-6">
       <div className="flex max-w-6xl mx-auto my-36 bg-white shadow-md rounded-2xl overflow-hidden">
         {/* Sidebar */}
         <Sidebar />
@@ -28,53 +55,59 @@ export default function SettingPage() {
           <p className="text-gray-500 mb-6">
             Quản lý các thiết lập tài khoản và ứng dụng của bạn
           </p>
+          <div className="mt-10 border-t border-gray-300 pt-6">
+            <h2 className="text-lg font-bold text-red-600 mb-2">
+              Vùng nguy hiểm
+            </h2>
 
-          <form onSubmit={handleSave} className="space-y-6">
-            {/* Ngôn ngữ */}
-            <div>
-              <label className="block font-medium mb-2">Ngôn ngữ</label>
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="w-full border rounded-lg p-3"
-              >
-                <option value="vi">Tiếng Việt</option>
-                <option value="en">English</option>
-              </select>
-            </div>
+            <p className="text-gray-600 mb-4">
+              Việc xóa tài khoản là <b>vĩnh viễn</b> và không thể khôi phục.
+            </p>
 
-            {/* Email Notification */}
-            <div className="flex items-center justify-between">
-              <label className="font-medium">Nhận thông báo qua Email</label>
-              <input
-                type="checkbox"
-                checked={emailNotify}
-                onChange={(e) => setEmailNotify(e.target.checked)}
-                className="h-5 w-5 accent-green-600"
-              />
-            </div>
-
-            {/* Dark Mode */}
-            <div className="flex items-center justify-between">
-              <label className="font-medium">Chế độ tối (Dark Mode)</label>
-              <input
-                type="checkbox"
-                checked={darkMode}
-                onChange={(e) => setDarkMode(e.target.checked)}
-                className="h-5 w-5 accent-green-600"
-              />
-            </div>
-
-            {/* Save button */}
             <button
-              type="submit"
-              className="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 transition"
+              onClick={() => setShowModal(true)}
+              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-black transition flex gap-2 items-center"
             >
-              Lưu thay đổi
+              <FaTrash /> Xóa tài khoản
             </button>
-          </form>
+          </div>
+
+
         </main>
       </div>
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl w-96 p-6 text-center animate-fadeIn">
+            <h2 className="text-xl font-bold text-red-600 mb-3">
+              Xác nhận xóa tài khoản
+            </h2>
+
+            <p className="text-gray-600 mb-6">
+              Bạn có chắc chắn muốn xóa tài khoản? <br />
+              Hành động này <b>không thể hoàn tác</b>.
+            </p>
+
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setShowModal(false)}
+                disabled={loading}
+                className="px-5 py-2 rounded-lg border hover:bg-black hover:text-white"
+              >
+                Hủy
+              </button>
+
+              <button
+                onClick={handleDeleteAccount}
+                disabled={loading}
+                className="px-5 py-2 rounded-lg bg-red-600 text-white hover:bg-black disabled:opacity-50"
+              >
+                {loading ? "Đang xóa..." : "Xóa tài khoản"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

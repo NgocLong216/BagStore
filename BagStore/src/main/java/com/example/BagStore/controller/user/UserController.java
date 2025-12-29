@@ -46,4 +46,11 @@ public class UserController {
         return ResponseEntity.ok(url);
     }
 
+    @DeleteMapping("/me")
+    public ResponseEntity<?> deleteMyAccount(Authentication authentication) {
+        String username = authentication.getName(); // lấy từ JWT
+        userService.deleteUserByUsername(username);
+        return ResponseEntity.ok().build();
+    }
+
 }

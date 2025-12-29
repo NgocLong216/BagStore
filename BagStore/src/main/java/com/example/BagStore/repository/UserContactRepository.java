@@ -18,6 +18,7 @@ public interface UserContactRepository extends JpaRepository<UserContact, Intege
     List<UserContact> findByUser_UserId(Integer userId);
 
     boolean existsByUser_UserId(Integer userId);
+    void deleteByUser_UserId(Integer userId);
 
 }
 

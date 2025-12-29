@@ -161,7 +161,7 @@ export default function LoginPage({ setUser }) {
             </button>
             <p className="mt-4 text-sm">hoặc đăng nhập bằng</p>
             <div className="flex justify-center mt-3 space-x-3">
-              <a href="#" className="p-3 border-2 border-gray-400 rounded-lg text-xl text-gray-700" > <FaFacebook /> </a>
+              {/* <a href="#" className="p-3 border-2 border-gray-400 rounded-lg text-xl text-gray-700" > <FaFacebook /> </a> */}
               <a href="#"
                 className="p-3 border-2 border-gray-400 rounded-lg text-xl text-gray-700"
                 onClick={(e) => {
@@ -224,7 +224,18 @@ export default function LoginPage({ setUser }) {
             >
               Đăng Ký
             </button>
-            <p className="mt-4 text-sm">hoặc đăng ký bằng</p> <div className="flex justify-center mt-3 space-x-3"> <a href="#" className="p-3 border-2 border-gray-400 rounded-lg text-xl text-gray-700" > <FaFacebook /> </a> <a href="#" className="p-3 border-2 border-gray-400 rounded-lg text-xl text-gray-700" > <FaGoogle /> </a> </div>
+            <p className="mt-4 text-sm">hoặc đăng ký bằng</p>
+            <div className="flex justify-center mt-3 space-x-3">
+              {/* <a href="#" className="p-3 border-2 border-gray-400 rounded-lg text-xl text-gray-700" > <FaFacebook /> </a>  */}
+              <a href="#"
+                className="p-3 border-2 border-gray-400 rounded-lg text-xl text-gray-700"
+                onClick={(e) => {
+                  e.preventDefault();
+                  loginWithGoogle();
+                }}
+              > <FaGoogle />
+              </a>
+            </div>
           </form>
         </div>
 
