@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaShoppingCart, FaShoppingBag, FaStar } from "react-icons/fa";
+import { FaShoppingCart, FaShoppingBag, FaStar} from "react-icons/fa";
+import { CiDeliveryTruck, CiShare1, CiCircleCheck } from "react-icons/ci";
 import { useCart } from "../contexts/CartContext";
 import { CheckCircle2, XCircle } from "lucide-react";
 import ReviewPagination from "../components/Pagination";
@@ -37,7 +38,39 @@ export default function ProductInfoPage({ user }) {
     const [images, setImages] = useState([]);
     const [activeImage, setActiveImage] = useState("");
 
-
+    const handleShare = async () => {
+        const url = window.location.href;
+    
+        // Chỉ dùng Web Share khi:
+        // - HTTPS
+        // - KHÔNG phải localhost
+        const canUseWebShare =
+            navigator.share &&
+            window.location.protocol === "https:" &&
+            !window.location.hostname.includes("localhost");
+    
+        if (canUseWebShare) {
+            try {
+                await navigator.share({
+                    title: product.name,
+                    text: product.description,
+                    url,
+                });
+                return;
+            } catch (err) {
+                console.warn("Share cancelled or failed", err);
+            }
+        }
+    
+        //  Fallback: copy link
+        await navigator.clipboard.writeText(url);
+        setToastType("success");
+        setToastMessage("Đã copy link sản phẩm");
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+    };
+    
+    
 
     const resolveImageUrl = (url) => {
         if (!url) return "/images/default.jpg";
@@ -174,12 +207,12 @@ export default function ProductInfoPage({ user }) {
 
     const addReview = async ({ rating, comment }) => {
         const token = localStorage.getItem("token");
-    
+
         if (!token) {
             navigate("/login");
             return;
         }
-    
+
         try {
             const res = await fetch(
                 `http://localhost:8080/api/product-review/${id}/reviews`,
@@ -192,7 +225,7 @@ export default function ProductInfoPage({ user }) {
                     body: JSON.stringify({ rating, comment }),
                 }
             );
-    
+
             //  Backend trả lỗi (400, 409...)
             if (!res.ok) {
                 setToastType("error");
@@ -201,16 +234,16 @@ export default function ProductInfoPage({ user }) {
                 setTimeout(() => setShowToast(false), 2500);
                 return;
             }
-            
-    
+
+
             //  Thành công
             setToastType("success");
             setToastMessage("Đánh giá thành công");
             setShowToast(true);
             setTimeout(() => setShowToast(false), 2000);
-    
+
             fetchReviews();
-    
+
         } catch (err) {
             console.error(err);
             setToastType("error");
@@ -219,7 +252,7 @@ export default function ProductInfoPage({ user }) {
             setTimeout(() => setShowToast(false), 2500);
         }
     };
-    
+
 
 
 
@@ -287,12 +320,12 @@ export default function ProductInfoPage({ user }) {
         } else {
             document.body.style.overflow = "auto";
         }
-    
+
         return () => {
             document.body.style.overflow = "auto";
         };
     }, [showToast]);
-    
+
 
 
     // ================== RENDER ==================
@@ -338,6 +371,21 @@ export default function ProductInfoPage({ user }) {
                 {/* Thông tin chi tiết */}
                 <div className="flex-1">
                     <h2 className="text-3xl font-bold mb-4">{product.name}</h2>
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="flex">
+                            {[...Array(5)].map((_, i) => (
+                                <FaStar
+                                    key={i}
+                                    className={i < Math.round(averageRating)
+                                        ? "text-yellow-400"
+                                        : "text-gray-300"}
+                                />
+                            ))}
+                        </div>
+                        <span className="text-sm text-gray-600">
+                            {averageRating}/5 ({totalReviews} đánh giá)
+                        </span>
+                    </div>
                     <p className="text-gray-600 mb-4">{product.description}</p>
                     <p className="text-2xl text-red-600 font-bold mb-6">
                         {product.price.toLocaleString()} ₫
@@ -395,7 +443,41 @@ export default function ProductInfoPage({ user }) {
                         </div>
                     )}
 
-                    {specs.length > 0 && (
+                    
+
+                    <div className="mb-6">
+                        <p className="text-sm text-gray-700 flex gap-3 items-center">
+                            <CiDeliveryTruck/> Giao hàng dự kiến:
+                            <span className="font-semibold ml-1">
+                                {new Date(Date.now() + 3 * 86400000).toLocaleDateString()}
+                            </span>
+                        </p>
+                        <p className="text-sm text-gray-500">
+                            Miễn phí vận chuyển cho đơn từ 500.000₫
+                        </p>
+                    </div>
+
+                    <div className="flex gap-4 text-gray-500 text-sm">
+
+                        <button className="hover:text-blue-500 transition flex gap-2 items-center" onClick={handleShare}>
+                            <CiShare1/> Chia sẻ
+                        </button>
+                    </div>
+
+                    <div className="border border-gray-200 rounded-lg p-4 mb-6 bg-gray-50 mt-10 max-w-115">
+                        <ul className="space-y-2 text-sm text-gray-700">
+                            <li className="flex gap-2 items-center"><CiCircleCheck/> Sản phẩm chính hãng 100%</li>
+                            <li className="flex gap-2 items-center"><CiCircleCheck/> Đổi trả trong 7 ngày</li>
+                            <li className="flex gap-2 items-center"><CiCircleCheck/> Bảo hành 6 tháng</li>
+                            <li className="flex gap-2 items-center"><CiCircleCheck/> Giao hàng toàn quốc</li>
+                        </ul>
+                    </div>
+
+
+
+
+
+                    {/* {specs.length > 0 && (
                         <ul className="text-gray-600 space-y-2">
                             {specs.map((s, idx) => (
                                 <li key={idx}>
@@ -403,7 +485,7 @@ export default function ProductInfoPage({ user }) {
                                 </li>
                             ))}
                         </ul>
-                    )}
+                    )} */}
                 </div>
             </div>
 

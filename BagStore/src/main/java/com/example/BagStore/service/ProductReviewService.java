@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +81,7 @@ public class ProductReviewService {
                 .userId(userId)
                 .rating(req.getRating())
                 .comment(req.getComment())
+                .createdAt(LocalDateTime.now())
                 .build();
 
         reviewRepository.save(review);
