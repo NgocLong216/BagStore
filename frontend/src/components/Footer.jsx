@@ -6,8 +6,8 @@ export default function Footer() {
       <div className="max-w-[1200px] mx-auto flex flex-wrap justify-between gap-8">
         
         {/* Column 1 */}
-        <div className="flex-1 min-w-[220px]">
-          <h2 className="font-bold text-xl mb-6">My Store</h2>
+        <div className="flex-1 min-w-[220px] mr-45">
+          <h2 className="font-bold text-xl mb-6 ">My Store</h2>
           <p className="mb-2 flex items-start">
             <FaMapMarkerAlt className="mr-2 mt-1" /> 984, Ấp Tân Hòa, Xã Xuân Thành, Huyện Xuân Lộc, Tỉnh Đồng Nai
           </p>
@@ -41,7 +41,7 @@ export default function Footer() {
           <h3 className="font-bold text-lg mb-6">Hỗ trợ</h3>
           <ul className="space-y-2">
             <li><a href="/#featured-products" className="hover:text-[#d4a373]">Sản phẩm nổi bật</a></li>
-            <li><a href="/#discount-products" className="hover:text-[#d4a373]">Sản phẩm khuyến mãi</a></li>
+            <li><a href="/#discount-products" className="hover:text-[#d4a373]">Sản phẩm mới</a></li>
             <li><a href="/products" className="hover:text-[#d4a373]">Tất cả sản phẩm</a></li>
           </ul>
         </div>
@@ -57,7 +57,7 @@ export default function Footer() {
         </div>
 
         {/* Column 4 - Newsletter */}
-        <div className="flex-1 min-w-[220px]">
+        {/* <div className="flex-1 min-w-[220px]">
           <h3 className="font-bold text-lg mb-6">Đăng ký nhận tin</h3>
           <p className="mb-4 text-sm">Để nhận thông tin và cập nhật cũng như khuyến mãi mới nhất từ My Store</p>
           <form className="space-y-3">
@@ -74,7 +74,7 @@ export default function Footer() {
               Đăng ký
             </button>
           </form>
-        </div>
+        </div> */}
       </div>
 
       {/* Bottom */}

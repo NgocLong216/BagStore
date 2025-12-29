@@ -72,7 +72,7 @@ public class ProductReviewService {
         }
 
         if (reviewRepository.existsByProductIdAndUserId(productId, userId)) {
-            throw new RuntimeException("Bạn đã đánh giá sản phẩm này");
+            throw new RuntimeException("Bạn đã đánh giá sản phẩm này rồi");
         }
 
         ProductReview review = ProductReview.builder()

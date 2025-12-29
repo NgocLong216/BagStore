@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaShoppingCart, FaShoppingBag, FaStar } from "react-icons/fa";
 import { useCart } from "../contexts/CartContext";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import ReviewPagination from "../components/Pagination";
 import { IoIosAlert } from "react-icons/io";
 import ReviewInput from "../components/ReviewInput";
+
 
 
 export default function ProductInfoPage({ user }) {
@@ -20,6 +21,8 @@ export default function ProductInfoPage({ user }) {
     const [activeTab, setActiveTab] = useState("details");
     const { cartCount, setCartCount } = useCart();
     const [showToast, setShowToast] = useState(false);
+    const [toastType, setToastType] = useState("success");
+
     const [toastMessage, setToastMessage] = useState("");
 
     // review
@@ -34,7 +37,7 @@ export default function ProductInfoPage({ user }) {
     const [images, setImages] = useState([]);
     const [activeImage, setActiveImage] = useState("");
 
-    
+
 
     const resolveImageUrl = (url) => {
         if (!url) return "/images/default.jpg";
@@ -46,7 +49,7 @@ export default function ProductInfoPage({ user }) {
         return `http://localhost:8080${url}`;
     };
 
-    
+
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -104,7 +107,7 @@ export default function ProductInfoPage({ user }) {
         fetchProduct();
     }, [id]);
 
-    
+
 
     // Mua ngay
     const handleBuyNow = () => {
@@ -171,27 +174,54 @@ export default function ProductInfoPage({ user }) {
 
     const addReview = async ({ rating, comment }) => {
         const token = localStorage.getItem("token");
-
+    
         if (!token) {
             navigate("/login");
             return;
         }
     
-        await fetch(`http://localhost:8080/api/products/${id}/reviews`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-                rating,
-                comment,
-            }),
-        });
+        try {
+            const res = await fetch(
+                `http://localhost:8080/api/product-review/${id}/reviews`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ rating, comment }),
+                }
+            );
     
-        fetchReviews();
+            //  Backend trả lỗi (400, 409...)
+            if (!res.ok) {
+                setToastType("error");
+                setToastMessage(data.message || "Không thể gửi đánh giá");
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 2500);
+                return;
+            }
+            
+    
+            //  Thành công
+            setToastType("success");
+            setToastMessage("Đánh giá thành công");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 2000);
+    
+            fetchReviews();
+    
+        } catch (err) {
+            console.error(err);
+            setToastType("error");
+            setToastMessage("Lỗi kết nối server");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 2500);
+        }
     };
     
+
+
 
     // ================== CART ==================
 
@@ -236,7 +266,7 @@ export default function ProductInfoPage({ user }) {
 
             setCartCount((prev) => prev + qty);
 
-            // 👉 Toast thành công
+            //  Toast thành công
             setToastMessage("Đã thêm vào giỏ hàng");
             setShowToast(true);
             setTimeout(() => setShowToast(false), 2000);
@@ -250,6 +280,19 @@ export default function ProductInfoPage({ user }) {
             return false;
         }
     };
+
+    useEffect(() => {
+        if (showToast) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "auto";
+        }
+    
+        return () => {
+            document.body.style.overflow = "auto";
+        };
+    }, [showToast]);
+    
 
 
     // ================== RENDER ==================
@@ -568,20 +611,26 @@ export default function ProductInfoPage({ user }) {
             </div>
             {showToast && (
                 <div className="fixed inset-0 flex items-center justify-center z-50">
-                    {/* Overlay mờ */}
+                    {/* Overlay */}
                     <div className="absolute inset-0 bg-black/40"></div>
 
-                    {/* Box thông báo */}
+                    {/* Box */}
                     <div className="relative bg-white px-8 py-6 rounded-2xl shadow-xl text-center animate-scaleIn">
                         <div className="flex justify-center mb-6">
-                            <CheckCircle2 className="w-20 h-20 text-green-600" />
+                            {toastType === "success" ? (
+                                <CheckCircle2 className="w-20 h-20 text-green-600" />
+                            ) : (
+                                <XCircle className="w-20 h-20 text-red-600" />
+                            )}
                         </div>
+
                         <h3 className="text-lg font-semibold text-gray-800">
                             {toastMessage}
                         </h3>
                     </div>
                 </div>
             )}
+
 
         </div>
     );

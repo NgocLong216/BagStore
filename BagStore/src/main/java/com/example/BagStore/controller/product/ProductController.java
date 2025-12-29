@@ -102,20 +102,7 @@ public class ProductController {
         return imageService.getImagesByProduct(productId);
     }
 
-    @PostMapping("/{id}/reviews")
-    public ResponseEntity<?> addReview(
-            @PathVariable Long id,
-            @RequestBody ProductReview req,
-            @AuthenticationPrincipal CustomUserDetails user
-    ) {
-        reviewService.addReview(
-                id,
-                user.getUser().getUserId(),
-                req
-        );
 
-        return ResponseEntity.ok("Đã thêm đánh giá");
-    }
 
     @GetMapping("/top-selling")
     public List<TopProductDTO> topProducts(
