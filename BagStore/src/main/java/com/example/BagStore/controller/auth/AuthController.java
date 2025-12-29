@@ -1,10 +1,7 @@
 package com.example.BagStore.controller.auth;
 
 import com.example.BagStore.config.JwtUtil;
-import com.example.BagStore.dto.GoogleLoginRequest;
-import com.example.BagStore.dto.GoogleUserInfo;
-import com.example.BagStore.dto.LoginRequest;
-import com.example.BagStore.dto.SignupRequest;
+import com.example.BagStore.dto.*;
 import com.example.BagStore.entity.User;
 import com.example.BagStore.enums.Role;
 import com.example.BagStore.repository.UserRepository;
@@ -100,5 +97,19 @@ public class AuthController {
                 "user", user
         ));
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> req) {
+        authService.sendResetPassword(req.get("email"));
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest req) {
+        authService.resetPassword(req.getToken(), req.getPassword());
+        return ResponseEntity.ok().build();
+    }
+
+
 
 }

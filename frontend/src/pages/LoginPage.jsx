@@ -13,6 +13,12 @@ export default function LoginPage({ setUser }) {
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotMsg, setForgotMsg] = useState("");
+  const [loadingForgot, setLoadingForgot] = useState(false);
+
+
 
   const API_URL = "http://localhost:8080/api/auth";
 
@@ -149,9 +155,17 @@ export default function LoginPage({ setUser }) {
               <FaLock className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
             </div>
             <div className="text-left mb-4">
-              <a href="#" className="text-sm text-gray-700 hover:underline">
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowForgot(true);
+                }}
+                className="text-sm text-gray-700 hover:underline"
+              >
                 Quên mật khẩu?
               </a>
+
             </div>
             <button
               type="submit"
@@ -269,6 +283,77 @@ export default function LoginPage({ setUser }) {
           )}
         </div>
       </section>
+      {showForgot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl w-96 p-6 animate-fadeIn">
+            <h2 className="text-xl font-bold mb-2 text-center">
+              Quên mật khẩu
+            </h2>
+
+            <p className="text-sm text-gray-600 mb-4 text-center">
+              Nhập email đã đăng ký để nhận link đặt lại mật khẩu
+            </p>
+
+            {forgotMsg && (
+              <p className="text-center text-green-600 mb-3">
+                {forgotMsg}
+              </p>
+            )}
+
+            <input
+              type="email"
+              placeholder="Email"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg bg-gray-200 focus:outline-none mb-4"
+            />
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowForgot(false)}
+                className="px-4 py-2 border rounded-lg hover:bg-black hover:text-white"
+              >
+                Hủy
+              </button>
+
+              <button
+                disabled={loadingForgot}
+                onClick={async () => {
+                  setLoadingForgot(true);
+                  setForgotMsg("");
+
+                  try {
+                    const res = await fetch(
+                      "http://localhost:8080/api/auth/forgot-password",
+                      {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email: forgotEmail }),
+                      }
+                    );
+
+                    if (!res.ok) throw new Error();
+
+                    setForgotMsg(
+                      "Nếu email tồn tại, chúng tôi đã gửi link đặt lại mật khẩu."
+                    );
+                  } catch {
+                    setForgotMsg(
+                      "Nếu email tồn tại, chúng tôi đã gửi link đặt lại mật khẩu."
+                    );
+                  } finally {
+                    setLoadingForgot(false);
+                  }
+                }}
+                className="px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-black disabled:opacity-50"
+              >
+                {loadingForgot ? "Đang gửi..." : "Gửi"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }

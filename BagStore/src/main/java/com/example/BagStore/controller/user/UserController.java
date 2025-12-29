@@ -1,5 +1,6 @@
 package com.example.BagStore.controller.user;
 
+import com.example.BagStore.dto.ChangePasswordRequest;
 import com.example.BagStore.dto.UserResponse;
 import com.example.BagStore.dto.UserUpdateRequest;
 import com.example.BagStore.service.UserService;
@@ -52,5 +53,17 @@ public class UserController {
         userService.deleteUserByUsername(username);
         return ResponseEntity.ok().build();
     }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            @RequestBody ChangePasswordRequest request,
+            Authentication authentication) {
+
+        String username = authentication.getName();
+        userService.changePassword(username, request);
+
+        return ResponseEntity.ok("Đổi mật khẩu thành công");
+    }
+
 
 }

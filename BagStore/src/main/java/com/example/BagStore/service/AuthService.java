@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,9 @@ public class AuthService {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private EmailService emailService;
 
     public LoginResult login(LoginRequest req) {
         Optional<User> userOpt = userRepository.findByUsername(req.getUsername());
@@ -94,4 +98,36 @@ public class AuthService {
 
         return userRepository.save(user);
     }
+
+    @Transactional
+    public void sendResetPassword(String email) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            String token = UUID.randomUUID().toString();
+            user.setResetToken(token);
+            user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(15));
+            userRepository.save(user);
+
+            emailService.send(
+                    user.getEmail(),
+                    "Đặt lại mật khẩu",
+                    "Click link: http://localhost:5173/reset-password?token=" + token
+            );
+        });
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        User user = userRepository.findByResetToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid token"));
+
+        if (user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token expired");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setResetToken(null);
+        user.setResetTokenExpiry(null);
+    }
+
+
 }

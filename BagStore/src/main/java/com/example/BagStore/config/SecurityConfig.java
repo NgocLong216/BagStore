@@ -22,8 +22,7 @@ public class SecurityConfig {
 
     // Danh sách endpoint public dùng chung
     public static final String[] PUBLIC_ENDPOINTS = {
-            "/api/auth/login",
-            "/api/auth/signup",
+            "/api/auth/**",
             "/api/products",
             "/api/products/**",
             "/api/products/top4",

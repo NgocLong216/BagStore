@@ -1,9 +1,6 @@
 package com.example.BagStore.service;
 
-import com.example.BagStore.dto.CreateUserRequest;
-import com.example.BagStore.dto.UpdateUserRequest;
-import com.example.BagStore.dto.UserResponse;
-import com.example.BagStore.dto.UserUpdateRequest;
+import com.example.BagStore.dto.*;
 import com.example.BagStore.entity.User;
 import com.example.BagStore.enums.Role;
 import com.example.BagStore.repository.OrderRepository;
@@ -231,6 +228,19 @@ public class UserService {
         // 2 Xóa user
         userRepository.delete(user);
     }
+
+    public void changePassword(String username, ChangePasswordRequest req) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+
+        if (!passwordEncoder.matches(req.getOldPassword(), user.getPassword())) {
+            throw new RuntimeException("Mật khẩu hiện tại không đúng");
+        }
+
+        user.setPassword(passwordEncoder.encode(req.getNewPassword()));
+        userRepository.save(user);
+    }
+
 
 }
 

@@ -27,7 +27,7 @@ import AdminProductsPage from "./pages/admin/AdminProductsPage";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import BankTransferPage from "./pages/BankTransferPage";
 import AdminContactsPage from "./pages/admin/AdminContactsPage";
-
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 
 function App() {
@@ -68,6 +68,8 @@ function App() {
         <Route path="/orders" element={<OrderListPage />} />
         <Route path="/orders/:orderId" element={<OrderDetailPage />} />
         <Route path="/bank-transfer" element={<BankTransferPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+
 
       </Route>
 

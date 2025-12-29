@@ -33,5 +33,11 @@ public class User {
     private LocalDateTime createdAt;
 
     private Boolean active;
+
+    @Column(length = 100)
+    private String resetToken;
+
+    private LocalDateTime resetTokenExpiry;
+
 }
 
