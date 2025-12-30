@@ -17,6 +17,7 @@ export default function LoginPage({ setUser }) {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotMsg, setForgotMsg] = useState("");
   const [loadingForgot, setLoadingForgot] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
 
 
@@ -96,24 +97,33 @@ export default function LoginPage({ setUser }) {
     e.preventDefault();
     setError("");
     setSuccess("");
+    setFieldErrors({});
+
     try {
       const res = await fetch(`${API_URL}/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(registerData),
       });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || "Đăng ký thất bại");
-      }
+
       const data = await res.json();
+
+      if (!res.ok) {
+        if (data.errors) {
+          setFieldErrors(data.errors); //  map lỗi theo field
+        } else {
+          setError(data.message || "Đăng ký thất bại");
+        }
+        return;
+      }
+
       setSuccess("Đăng ký thành công! Hãy đăng nhập.");
-      console.log("Register success:", data);
-      setIsActive(false); // chuyển về form login
+      setIsActive(false);
     } catch (err) {
-      setError(err.message);
+      setError("Không thể kết nối server");
     }
   };
+
 
   return (
     <main className="flex justify-center items-center min-h-screen bg-[#fff8f2] mt-12">
@@ -143,6 +153,7 @@ export default function LoginPage({ setUser }) {
               />
               <FaUser className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
             </div>
+
             <div className="relative mb-4">
               <input
                 type="password"
@@ -204,34 +215,60 @@ export default function LoginPage({ setUser }) {
                 type="text"
                 placeholder="Tên đăng nhập"
                 value={registerData.username}
-                onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
+                onChange={(e) => {
+                  setRegisterData({ ...registerData, username: e.target.value });
+                  setFieldErrors((prev) => ({ ...prev, username: null }));
+                }}
+                
                 required
                 className="w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
               />
               <FaUser className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
             </div>
+            {fieldErrors.username && (
+              <p className="text-red-500 text-sm mb-3">
+                {fieldErrors.username}
+              </p>
+            )}
             <div className="relative mb-6">
               <input
                 type="email"
                 placeholder="Email"
                 value={registerData.email}
-                onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                onChange={(e) => {
+                  setRegisterData({ ...registerData, email: e.target.value });
+                  setFieldErrors((prev) => ({ ...prev, email: null }));
+                }}
+                
                 required
                 className="w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
               />
               <FaEnvelope className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
             </div>
+            {fieldErrors.email && (
+              <p className="text-red-500 text-sm mb-3">
+                {fieldErrors.email}
+              </p>
+            )}
             <div className="relative mb-6">
               <input
                 type="password"
                 placeholder="Mật khẩu"
                 value={registerData.password}
-                onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                onChange={(e) => {
+                  setRegisterData({ ...registerData, password: e.target.value });
+                  setFieldErrors((prev) => ({ ...prev, password: null }));
+                }}
                 required
                 className="w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
               />
               <FaLock className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
             </div>
+            {fieldErrors.password && (
+              <p className="text-red-500 text-sm mb-3">
+                {fieldErrors.password}
+              </p>
+            )}
             <button
               type="submit"
               className="w-full h-12 bg-green-700 rounded-lg shadow text-white font-semibold hover:bg-green-800"

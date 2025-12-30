@@ -20,7 +20,7 @@ export default function Footer() {
           <p className="mb-4 flex items-center">
             <FaClock className="mr-2" /> Phản hồi 24/7 qua điện thoại và email.
           </p>
-          <div className="flex gap-3">
+          {/* <div className="flex gap-3">
             <a href="#" className="bg-[#3c763d] w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#d4a373]">
               <FaFacebookF />
             </a>
@@ -33,7 +33,7 @@ export default function Footer() {
             <a href="#" className="bg-[#3c763d] w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#d4a373]">
               <FaTiktok />
             </a>
-          </div>
+          </div> */}
         </div>
 
         {/* Column 2 */}

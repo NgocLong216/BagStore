@@ -36,17 +36,17 @@ public class AuthService {
         Optional<User> userOpt = userRepository.findByUsername(req.getUsername());
 
         if (userOpt.isEmpty()) {
-            return LoginResult.fail("Invalid username or password");
+            return LoginResult.fail("Tên đăng nhập hoặc mật khẩu sai");
         }
 
         User user = userOpt.get();
 
         if (!Boolean.TRUE.equals(user.getActive())) {
-            return LoginResult.fail("User not active");
+            return LoginResult.fail("Người dùng không còn hoạt động");
         }
 
         if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
-            return LoginResult.fail("Invalid username or password");
+            return LoginResult.fail("Tên đăng nhập hoặc mật khẩu sai");
         }
 
         String token = jwtUtil.generateToken(user);
@@ -82,10 +82,10 @@ public class AuthService {
     public User signup(String username, String email, String password) {
         // Kiểm tra username hoặc email đã tồn tại
         if (userRepository.findByUsername(username).isPresent()) {
-            throw new RuntimeException("Username already taken");
+            throw new RuntimeException("Tên đăng nhập này đã sử dụng");
         }
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new RuntimeException("Email already registered");
+            throw new RuntimeException("Email đã sử dụng");
         }
 
         User user = new User();

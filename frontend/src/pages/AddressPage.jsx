@@ -22,6 +22,21 @@ export default function AddressPage() {
   const [modalMessage, setModalMessage] = useState("");
   const [selectedId, setSelectedId] = useState(null);
 
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+
+  const [provinceCode, setProvinceCode] = useState("");
+  const [districtCode, setDistrictCode] = useState("");
+  const [wardCode, setWardCode] = useState("");
+
+  useEffect(() => {
+    fetch("https://provinces.open-api.vn/api/p/")
+      .then(res => res.json())
+      .then(data => setProvinces(data));
+  }, []);
+
+
   useEffect(() => {
     document.body.style.overflow = showModal ? "hidden" : "auto";
     return () => (document.body.style.overflow = "auto");
@@ -47,11 +62,81 @@ export default function AddressPage() {
       .catch((err) => console.error(err));
   }, []);
 
+  const handleProvinceChange = async (e) => {
+    const code = e.target.value;
+    setProvinceCode(code);
+    setDistrictCode("");
+    setWardCode("");
+    setWards([]);
 
-  const handleOpenPopup = (contact = null) => {
+    const res = await fetch(
+      `https://provinces.open-api.vn/api/p/${code}?depth=2`
+    );
+    const data = await res.json();
+    setDistricts(data.districts || []);
+  };
+
+  const handleDistrictChange = async (e) => {
+    const code = e.target.value;
+    setDistrictCode(code);
+    setWardCode("");
+
+    const res = await fetch(
+      `https://provinces.open-api.vn/api/d/${code}?depth=2`
+    );
+    const data = await res.json();
+    setWards(data.wards || []);
+  };
+
+
+
+  const handleOpenPopup = async (contact = null) => {
     if (contact) {
-      setFormData(contact);
+      setFormData({
+        contactId: contact.contactId,
+        fullName: contact.fullName,
+        phone: contact.phone,
+        subAddress: contact.subAddress,
+        address: contact.address,
+        isDefault: contact.isDefault,
+      });
+
+
+      //  TÁCH ADDRESS
+      const [wardName, districtName, provinceName] =
+        contact.address.split(",").map(s => s.trim());
+
+      //  TÌM PROVINCE CODE
+      const province = provinces.find(p => p.name === provinceName);
+      if (!province) return;
+
+      setProvinceCode(province.code);
+
+      //  LOAD DISTRICTS
+      const resDistrict = await fetch(
+        `https://provinces.open-api.vn/api/p/${province.code}?depth=2`
+      );
+      const provinceData = await resDistrict.json();
+      setDistricts(provinceData.districts);
+
+      const district = provinceData.districts.find(d => d.name === districtName);
+      if (!district) return;
+
+      setDistrictCode(district.code);
+
+      //  LOAD WARDS
+      const resWard = await fetch(
+        `https://provinces.open-api.vn/api/d/${district.code}?depth=2`
+      );
+      const districtData = await resWard.json();
+      setWards(districtData.wards);
+
+      const ward = districtData.wards.find(w => w.name === wardName);
+      if (!ward) return;
+
+      setWardCode(ward.code);
     } else {
+      // CREATE
       setFormData({
         contactId: null,
         fullName: "",
@@ -60,9 +145,17 @@ export default function AddressPage() {
         address: "",
         isDefault: false,
       });
+
+      setProvinceCode("");
+      setDistrictCode("");
+      setWardCode("");
+      setDistricts([]);
+      setWards([]);
     }
+
     setShowPopup(true);
   };
+
 
   const handleClosePopup = () => setShowPopup(false);
 
@@ -71,32 +164,76 @@ export default function AddressPage() {
     e.preventDefault();
     const token = localStorage.getItem("token");
 
-    const url = formData.contactId ? `${API_URL}/${formData.contactId}` : API_URL;
-    const method = formData.contactId ? "PUT" : "POST";
+    const provinceName = provinces.find(p => p.code == provinceCode)?.name || "";
+    const districtName = districts.find(d => d.code == districtCode)?.name || "";
+    const wardName = wards.find(w => w.code == wardCode)?.name || "";
 
-    fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-      body: JSON.stringify(formData),
-    })
-      .then(() => {
-        return fetch(API_URL, {
-          headers: { "Authorization": `Bearer ${token}` },
-        })
-          .then((res) => res.json())
-          .then((data) => setUserContacts(data));
+    const fullAddress = `${wardName}, ${districtName}, ${provinceName}`;
+
+    const payload = {
+      contactId: formData.contactId,
+      fullName: formData.fullName,
+      phone: formData.phone,
+      subAddress: formData.subAddress,
+      address: fullAddress,
+      isDefault: formData.isDefault,
+    };
+
+
+    fetch(
+      formData.contactId
+        ? `${API_URL}/${formData.contactId}`
+        : API_URL,
+      {
+        method: formData.contactId ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    )
+
+      .then((res) => {
+        if (!res.ok) throw new Error("Lỗi lưu địa chỉ");
+        return res.json();
       })
-      .finally(() => {
-        setShowPopup(false);
-        setModalType("success");
-        setModalMessage("Lưu địa chỉ thành công!");
-        setShowModal(true);
-      });
+      .then(() => {
+        //  Reload danh sách
+        return fetch(API_URL, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      })
+      .then((res) => res.json())
+      .then((data) => {
+        setUserContacts(data);
 
+        //  ĐÓNG POPUP
+        setShowPopup(false);
+
+        //  RESET FORM
+        setFormData({
+          contactId: null,
+          fullName: "",
+          phone: "",
+          subAddress: "",
+          address: "",
+          isDefault: false,
+        });
+
+        setProvinceCode("");
+        setDistrictCode("");
+        setWardCode("");
+        setDistricts([]);
+        setWards([]);
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Có lỗi xảy ra khi lưu địa chỉ!");
+      });
   };
+
+
 
 
   // Xóa địa chỉ
@@ -286,18 +423,61 @@ export default function AddressPage() {
                     required
                   />
                 </div>
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Phường / Quận / Tỉnh"
-                    className="w-full px-4 py-2 rounded-lg bg-gray-200 focus:outline-none"
-                    value={formData.address}
-                    onChange={(e) =>
-                      setFormData({ ...formData, address: e.target.value })
-                    }
-                    required
-                  />
+                {/* Province */}
+                <div className="relative">
+                  <select
+                    value={provinceCode}
+                    onChange={handleProvinceChange}
+                    className="w-full px-4 py-2 pr-10 rounded-lg bg-gray-200 
+                 focus:outline-none focus:ring-2 focus:ring-green-700 
+                 appearance-none"
+                  >
+                    <option value="">Chọn Tỉnh / Thành phố</option>
+                    {provinces.map(p => (
+                      <option key={p.code} value={p.code}>{p.name}</option>
+                    ))}
+                  </select>
+                  <i className="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i>
                 </div>
+
+                {/* District */}
+                <div className="relative">
+                  <select
+                    value={districtCode}
+                    onChange={handleDistrictChange}
+                    disabled={!provinceCode}
+                    className="w-full px-4 py-2 pr-10 rounded-lg bg-gray-200 
+                 focus:outline-none focus:ring-2 focus:ring-green-700 
+                 appearance-none disabled:opacity-50"
+                  >
+                    <option value="">Chọn Quận / Huyện</option>
+                    {districts.map(d => (
+                      <option key={d.code} value={d.code}>{d.name}</option>
+                    ))}
+                  </select>
+                  <i className="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+                </div>
+
+                {/* Ward */}
+                <div className="relative">
+                  <select
+                    value={wardCode}
+                    onChange={(e) => setWardCode(e.target.value)}
+                    disabled={!districtCode}
+                    className="w-full px-4 py-2 pr-10 rounded-lg bg-gray-200 
+                 focus:outline-none focus:ring-2 focus:ring-green-700 
+                 appearance-none disabled:opacity-50"
+                  >
+                    <option value="">Chọn Phường / Xã</option>
+                    {wards.map(w => (
+                      <option key={w.code} value={w.code}>{w.name}</option>
+                    ))}
+                  </select>
+                  <i className="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+                </div>
+
+
+
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"

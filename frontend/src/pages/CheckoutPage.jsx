@@ -17,6 +17,94 @@ export default function CheckoutPage() {
     const [errors, setErrors] = useState({});
     const [shake, setShake] = useState({});
 
+    const [provinces, setProvinces] = useState([]);
+    const [districts, setDistricts] = useState([]);
+    const [wards, setWards] = useState([]);
+
+    const [provinceCode, setProvinceCode] = useState("");
+    const [districtCode, setDistrictCode] = useState("");
+    const [wardCode, setWardCode] = useState("");
+
+    useEffect(() => {
+        fetch("https://provinces.open-api.vn/api/p/")
+            .then(res => res.json())
+            .then(data => setProvinces(data));
+    }, []);
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        fetch("http://localhost:8080/api/contacts", {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then(res => res.json())
+            .then(async data => {
+                const d = data.find(a => a.isDefault);
+                if (!d) return;
+
+                setFullName(d.fullName);
+                setPhone(d.phone);
+                setSubAddress(d.subAddress);
+
+                // 🔥 TÁCH ADDRESS
+                const [wardName, districtName, provinceName] =
+                    d.address.split(",").map(s => s.trim());
+
+                const province = provinces.find(p => p.name === provinceName);
+                if (!province) return;
+
+                setProvinceCode(province.code);
+
+                const resDistrict = await fetch(
+                    `https://provinces.open-api.vn/api/p/${province.code}?depth=2`
+                );
+                const provinceData = await resDistrict.json();
+                setDistricts(provinceData.districts);
+
+                const district = provinceData.districts.find(d => d.name === districtName);
+                if (!district) return;
+
+                setDistrictCode(district.code);
+
+                const resWard = await fetch(
+                    `https://provinces.open-api.vn/api/d/${district.code}?depth=2`
+                );
+                const districtData = await resWard.json();
+                setWards(districtData.wards);
+
+                const ward = districtData.wards.find(w => w.name === wardName);
+                if (ward) setWardCode(ward.code);
+            });
+    }, [provinces]);
+
+    const handleProvinceChange = async (e) => {
+        const code = e.target.value;
+        setProvinceCode(code);
+        setDistrictCode("");
+        setWardCode("");
+        setWards([]);
+
+        const res = await fetch(
+            `https://provinces.open-api.vn/api/p/${code}?depth=2`
+        );
+        const data = await res.json();
+        setDistricts(data.districts || []);
+    };
+
+    const handleDistrictChange = async (e) => {
+        const code = e.target.value;
+        setDistrictCode(code);
+        setWardCode("");
+
+        const res = await fetch(
+            `https://provinces.open-api.vn/api/d/${code}?depth=2`
+        );
+        const data = await res.json();
+        setWards(data.wards || []);
+    };
+
+
     // Fetch default address
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -40,11 +128,23 @@ export default function CheckoutPage() {
     const handlePlaceOrder = async () => {
         setErrors({});
         setShake({});
-    
+
         const token = localStorage.getItem("token");
         if (!token) return;
-    
-        // ===== BANK: chỉ chuyển trang, KHÔNG tạo order =====
+
+        // TẠO ADDRESS CHUNG
+        const provinceName = provinces.find(p => p.code == provinceCode)?.name || "";
+        const districtName = districts.find(d => d.code == districtCode)?.name || "";
+        const wardName = wards.find(w => w.code == wardCode)?.name || "";
+
+        if (!provinceName || !districtName || !wardName) {
+            alert("Vui lòng chọn đầy đủ Tỉnh / Huyện / Xã");
+            return;
+        }
+
+        const address = `${wardName}, ${districtName}, ${provinceName}`;
+
+        // ===== BANK =====
         if (paymentMethod === "BANK") {
             const paymentRef = `DH${Date.now()}`;
 
@@ -62,12 +162,12 @@ export default function CheckoutPage() {
             });
             return;
         }
-    
+
         try {
             setLoading(true);
             const paymentRef = `DH${Date.now()}`;
-    
-            // ===== 1. TẠO ORDER (COD + MOMO) =====
+
+            // ===== 1. CREATE ORDER =====
             const orderRes = await fetch("http://localhost:8080/api/orders", {
                 method: "POST",
                 headers: {
@@ -89,13 +189,12 @@ export default function CheckoutPage() {
                     })),
                 }),
             });
-    
+
             const orderData = await orderRes.json();
-    
+
             if (!orderRes.ok) {
                 if (orderData.errors) {
                     setErrors(orderData.errors);
-    
                     const shakeFields = {};
                     Object.keys(orderData.errors).forEach(f => (shakeFields[f] = true));
                     setShake(shakeFields);
@@ -104,50 +203,16 @@ export default function CheckoutPage() {
                 }
                 throw new Error(orderData.message || "Đặt hàng thất bại");
             }
-    
-            // ===== 2. MOMO =====
-            if (paymentMethod === "MOMO") {
-                try {
-                    const momoRes = await fetch("http://localhost:8080/api/pay/momo", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`,
-                        },
-                        body: JSON.stringify({
-                            orderId: orderData.orderId.toString(),
-                            amount: orderData.totalPrice.toString(),
-                        }),
-                    });
-    
-                    if (!momoRes.ok) {
-                        const text = await momoRes.text();
-                        throw new Error(`Momo API error ${momoRes.status}: ${text}`);
-                    }
-    
-                    const momoData = await momoRes.json();
-    
-                    if (momoData.payUrl) {
-                        window.location.href = momoData.payUrl;
-                    } else {
-                        throw new Error("Thanh toán Momo thất bại");
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert("Thanh toán Momo thất bại: " + err.message);
-                }
-                return;
-            }
-    
-            // ===== 3. COD =====
+
+            // ===== COD =====
             navigate("/order-success", {
                 state: {
-                    paymentRef: paymentRef,
+                    paymentRef,
                     orderId: orderData.orderId,
                     totalPrice: orderData.totalPrice,
                 },
             });
-    
+
         } catch (err) {
             console.error(err);
             alert("Đặt hàng thất bại: " + err.message);
@@ -155,7 +220,8 @@ export default function CheckoutPage() {
             setLoading(false);
         }
     };
-    
+
+
 
     // Empty cart
     if (items.length === 0) {
@@ -180,8 +246,11 @@ export default function CheckoutPage() {
                 {/* LEFT FORM */}
                 <div className="lg:col-span-2 bg-white shadow-md rounded-xl p-6">
                     <h2 className="text-xl font-semibold mb-6">Thông tin giao hàng</h2>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+
+                        {/* HỌ TÊN */}
+                        <div className="flex flex-col gap-1">
                             <input
                                 type="text"
                                 placeholder="Họ và tên"
@@ -190,24 +259,45 @@ export default function CheckoutPage() {
                                     setFullName(e.target.value);
                                     setErrors(prev => ({ ...prev, fullName: "" }));
                                 }}
-                                className={`w-full px-5 py-3 rounded-lg text-base font-medium focus:outline-none ${errors.fullName ? "border-2 border-red-500 bg-red-50 animate-shake" : "bg-gray-200"}`}
+                                className={`w-full px-5 py-3 rounded-lg text-base font-medium focus:outline-none
+                                            ${errors.fullName
+                                        ? "border-2 border-red-500 bg-red-50 animate-shake"
+                                        : "bg-gray-200"
+                                    }`}
                             />
+
+                            {errors.fullName && (
+                                <span className="text-sm text-red-500">{errors.fullName}</span>
+                            )}
                         </div>
 
-                        <div>
+
+
+                        {/* SỐ ĐIỆN THOẠI */}
+                        <div className="flex flex-col gap-1">
                             <input
                                 type="text"
                                 placeholder="Số điện thoại"
                                 value={phone}
                                 onChange={e => {
                                     setPhone(e.target.value);
-                                    setErrors(prev => ({ ...prev, phone: null }));
+                                    setErrors(prev => ({ ...prev, phone: "" }));
                                 }}
-                                className={`w-full px-5 py-3 rounded-lg text-base font-medium focus:outline-none ${errors.phone ? "border-2 border-red-500 bg-red-50 animate-shake" : "bg-gray-200"}`}
+                                className={`w-full px-5 py-3 rounded-lg text-base font-medium focus:outline-none
+                                  ${errors.phone
+                                        ? "border-2 border-red-500 bg-red-50 animate-shake"
+                                        : "bg-gray-200"
+                                    }`}
                             />
+
+                            {errors.phone && (
+                                <span className="text-sm text-red-500">{errors.phone}</span>
+                            )}
                         </div>
 
-                        <div>
+
+                        {/* ĐỊA CHỈ CỤ THỂ */}
+                        <div className="flex flex-col gap-1 md:col-span-2">
                             <input
                                 type="text"
                                 placeholder="Địa chỉ cụ thể (số nhà, đường...)"
@@ -216,22 +306,56 @@ export default function CheckoutPage() {
                                     setSubAddress(e.target.value);
                                     setErrors(prev => ({ ...prev, subAddress: "" }));
                                 }}
-                                className={`w-full px-5 py-3 rounded-lg text-base font-medium focus:outline-none ${errors.subAddress ? "border-2 border-red-500 bg-red-50 animate-shake" : "bg-gray-200"}`}
+                                className={`w-full px-5 py-3 rounded-lg text-base font-medium focus:outline-none
+                             ${errors.subAddress
+                                        ? "border-2 border-red-500 bg-red-50 animate-shake"
+                                        : "bg-gray-200"
+                                    }`}
                             />
+
+                            {errors.subAddress && (
+                                <span className="text-sm text-red-500">{errors.subAddress}</span>
+                            )}
                         </div>
 
-                        <div>
-                            <input
-                                type="text"
-                                placeholder="Phường / Quận / Tỉnh"
-                                value={address}
-                                onChange={e => {
-                                    setAddress(e.target.value);
-                                    setErrors(prev => ({ ...prev, address: "" }));
-                                }}
-                                className={`w-full px-5 py-3 rounded-lg text-base font-medium focus:outline-none ${errors.address ? "border-2 border-red-500 bg-red-50 animate-shake" : "bg-gray-200"}`}
-                            />
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 col-span-2">
+                            <select
+                                value={provinceCode}
+                                onChange={handleProvinceChange}
+                                className="px-5 py-3 rounded-lg bg-gray-200 focus:outline-none"
+                            >
+                                <option value="">Chọn Tỉnh / Thành phố</option>
+                                {provinces.map(p => (
+                                    <option key={p.code} value={p.code}>{p.name}</option>
+                                ))}
+                            </select>
+
+                            <select
+                                value={districtCode}
+                                onChange={handleDistrictChange}
+                                disabled={!provinceCode}
+                                className="px-5 py-3 rounded-lg bg-gray-200 focus:outline-none disabled:opacity-50"
+                            >
+                                <option value="">Chọn Quận / Huyện</option>
+                                {districts.map(d => (
+                                    <option key={d.code} value={d.code}>{d.name}</option>
+                                ))}
+                            </select>
+
+                            <select
+                                value={wardCode}
+                                onChange={e => setWardCode(e.target.value)}
+                                disabled={!districtCode}
+                                className="px-5 py-3 rounded-lg bg-gray-200 focus:outline-none disabled:opacity-50"
+                            >
+                                <option value="">Chọn Phường / Xã</option>
+                                {wards.map(w => (
+                                    <option key={w.code} value={w.code}>{w.name}</option>
+                                ))}
+                            </select>
                         </div>
+
 
                         <textarea
                             placeholder="Ghi chú (tuỳ chọn)"
@@ -246,7 +370,7 @@ export default function CheckoutPage() {
                     <div className="mt-8">
                         <h3 className="font-semibold mb-3">Phương thức thanh toán</h3>
                         <div className="space-y-3">
-                            {["COD", "BANK", "MOMO"].map(method => (
+                            {["COD", "BANK"].map(method => (
                                 <label key={method} className="flex items-center gap-3 w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none">
                                     <input
                                         type="radio"
@@ -257,7 +381,7 @@ export default function CheckoutPage() {
                                     />
                                     {method === "COD" && "Thanh toán khi nhận hàng (COD)"}
                                     {method === "BANK" && "Chuyển khoản ngân hàng"}
-                                    {method === "MOMO" && "Ví điện tử (Momo / ZaloPay)"}
+                                    {/* {method === "MOMO" && "Ví điện tử (Momo / ZaloPay)"} */}
                                 </label>
                             ))}
                         </div>
