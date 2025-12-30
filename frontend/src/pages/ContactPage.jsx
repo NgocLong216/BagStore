@@ -66,12 +66,12 @@ export default function ContactPage() {
       <section className="flex flex-wrap justify-around p-10 mt-5">
         {/* Left */}
         <div className="w-full md:w-[45%]">
-          <h3 className="text-2xl text-[#d4a373] mt-5 mb-5">Liên Hệ My Store</h3>
+          <h3 className="text-2xl text-[#d4a373] mt-5 mb-5">Liên Hệ Backpack Zone</h3>
           <h1 className="text-4xl font-bold mb-2">
             Chúng tôi sẽ phản hồi bạn sớm nhất có thể
           </h1>
           <p className="text-base text-gray-600 my-5 leading-relaxed">
-            Khám phá bộ sưu tập balo thời trang đa dạng tại My Store – nơi phong
+            Khám phá bộ sưu tập balo thời trang đa dạng tại Backpack Zone – nơi phong
             cách gặp gỡ sự tiện dụng cho mọi hành trình của bạn.
           </p>
 

@@ -68,10 +68,11 @@ export default function Header({ user }) {
 
 
   return (
-    <header className="flex justify-between items-center px-[10%] py-6 bg-[#2c5f2d] fixed w-full top-0 z-[100000] text-white font-montserrat">
+    <header className="flex justify-between items-center px-[10%] h-[100px] bg-[#2c5f2d] fixed w-full top-0 z-[100000] text-white font-montserrat">
+
       {/* Logo */}
-      <Link to="/" className="text-2xl font-bold hover:text-[#d4a373]">
-        My Store
+      <Link to="/" className="flex items-center">
+        <img src="/longLogo.png" alt="Logo" className="h-30 object-contain"/>
       </Link>
 
       {/* Navigation */}

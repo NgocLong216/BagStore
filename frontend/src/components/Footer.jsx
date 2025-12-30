@@ -7,7 +7,7 @@ export default function Footer() {
         
         {/* Column 1 */}
         <div className="flex-1 min-w-[220px] mr-45">
-          <h2 className="font-bold text-xl mb-6 ">My Store</h2>
+          <h2 className="font-bold text-xl mb-6 ">Backpack Zone</h2>
           <p className="mb-2 flex items-start">
             <FaMapMarkerAlt className="mr-2 mt-1" /> 984, Ấp Tân Hòa, Xã Xuân Thành, Huyện Xuân Lộc, Tỉnh Đồng Nai
           </p>
@@ -59,7 +59,7 @@ export default function Footer() {
         {/* Column 4 - Newsletter */}
         {/* <div className="flex-1 min-w-[220px]">
           <h3 className="font-bold text-lg mb-6">Đăng ký nhận tin</h3>
-          <p className="mb-4 text-sm">Để nhận thông tin và cập nhật cũng như khuyến mãi mới nhất từ My Store</p>
+          <p className="mb-4 text-sm">Để nhận thông tin và cập nhật cũng như khuyến mãi mới nhất từ Backpack Zone</p>
           <form className="space-y-3">
             <input
               type="email"
@@ -79,7 +79,7 @@ export default function Footer() {
 
       {/* Bottom */}
       <div className="text-center mt-8 pt-4 border-t border-white/20 text-sm">
-        <p>Copyright © 2025 My Store</p>
+        <p>Copyright © 2025 Backpack Zone</p>
       </div>
     </footer>
   );

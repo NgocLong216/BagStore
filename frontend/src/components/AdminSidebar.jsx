@@ -26,7 +26,7 @@ export default function AdminSidebar() {
         className="p-6 text-2xl font-bold flex justify-center border-b border-white/20 cursor-pointer hover:text-green-300"
         onClick={() => navigate("/")}
       >
-        My Store
+        <img src="/logo.png" alt="Logo" className="" />
       </div>
 
       {/* Menu */}
