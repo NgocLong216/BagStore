@@ -4,6 +4,7 @@ import com.example.BagStore.dto.ChangePasswordRequest;
 import com.example.BagStore.dto.UserResponse;
 import com.example.BagStore.dto.UserUpdateRequest;
 import com.example.BagStore.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -29,7 +30,7 @@ public class UserController {
     @PutMapping("/me")
     public ResponseEntity<?> updateCurrentUser(
             Authentication authentication,
-            @RequestBody UserUpdateRequest request
+            @Valid @RequestBody UserUpdateRequest request
     ) {
         UserResponse updated = userService.updateCurrentUser(authentication, request);
         if (updated == null) {
@@ -56,7 +57,7 @@ public class UserController {
 
     @PutMapping("/change-password")
     public ResponseEntity<?> changePassword(
-            @RequestBody ChangePasswordRequest request,
+            @Valid @RequestBody ChangePasswordRequest request,
             Authentication authentication) {
 
         String username = authentication.getName();

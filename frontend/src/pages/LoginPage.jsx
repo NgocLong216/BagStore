@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FaUser, FaLock, FaEnvelope, FaFacebook, FaGoogle } from "react-icons/fa";
+import { FaUser, FaLock, FaEnvelope, FaFacebook, FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { useGoogleLogin } from "@react-oauth/google";
@@ -19,6 +19,10 @@ export default function LoginPage({ setUser }) {
   const [loadingForgot, setLoadingForgot] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
 
+  const [showPassword, setShowPassword] = useState({
+    login: false,
+    register: false,
+  });
 
 
   const API_URL = "http://localhost:8080/api/auth";
@@ -156,15 +160,30 @@ export default function LoginPage({ setUser }) {
 
             <div className="relative mb-4">
               <input
-                type="password"
+                type={showPassword.login ? "text" : "password"}
                 placeholder="Mật khẩu"
                 value={loginData.password}
-                onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                onChange={(e) =>
+                  setLoginData({ ...loginData, password: e.target.value })
+                }
                 required
-                className="w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
+                className="w-full px-5 py-3 pr-12 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
               />
-              <FaLock className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowPassword(prev => ({
+                    ...prev,
+                    login: !prev.login,
+                  }))
+                }
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-black"
+              >
+                {showPassword.login ? <FaEyeSlash className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-500 text-lg"/> : <FaEye className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-500 text-lg"/>}
+              </button>
             </div>
+
             <div className="text-left mb-4">
               <a
                 href="#"
@@ -219,7 +238,7 @@ export default function LoginPage({ setUser }) {
                   setRegisterData({ ...registerData, username: e.target.value });
                   setFieldErrors((prev) => ({ ...prev, username: null }));
                 }}
-                
+
                 required
                 className="w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
               />
@@ -239,7 +258,7 @@ export default function LoginPage({ setUser }) {
                   setRegisterData({ ...registerData, email: e.target.value });
                   setFieldErrors((prev) => ({ ...prev, email: null }));
                 }}
-                
+
                 required
                 className="w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
               />
@@ -252,7 +271,7 @@ export default function LoginPage({ setUser }) {
             )}
             <div className="relative mb-6">
               <input
-                type="password"
+                type={showPassword.register ? "text" : "password"}
                 placeholder="Mật khẩu"
                 value={registerData.password}
                 onChange={(e) => {
@@ -260,10 +279,23 @@ export default function LoginPage({ setUser }) {
                   setFieldErrors((prev) => ({ ...prev, password: null }));
                 }}
                 required
-                className="w-full px-5 py-3 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
+                className="w-full px-5 py-3 pr-12 bg-gray-200 rounded-lg text-gray-800 text-base font-medium focus:outline-none"
               />
-              <FaLock className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowPassword(prev => ({
+                    ...prev,
+                    register: !prev.register,
+                  }))
+                }
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-black"
+              >
+                {showPassword.register ? <FaEyeSlash className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-500 text-lg"/> : <FaEye className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-500 text-lg"/>}
+              </button>
             </div>
+
             {fieldErrors.password && (
               <p className="text-red-500 text-sm mb-3">
                 {fieldErrors.password}

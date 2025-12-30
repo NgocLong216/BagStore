@@ -6,13 +6,15 @@ import Sidebar from "../components/Sidebar";
 export default function ProfilePage() {
   const [formData, setFormData] = useState({
     username: "",
-    email: "",
+    // email: "",
     phone: "",
   });
 
   const [avatar, setAvatar] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
+  const [errors, setErrors] = useState({});
+
 
   useEffect(() => {
     if (showModal) {
@@ -33,7 +35,7 @@ export default function ProfilePage() {
     if (savedUser) {
       setFormData({
         username: savedUser.username,
-        email: savedUser.email,
+        // email: savedUser.email,
         phone: savedUser.phone || ""
       });
     }
@@ -46,7 +48,7 @@ export default function ProfilePage() {
       .then(data => {
         setFormData({
           username: data.username,
-          email: data.email,
+          // email: data.email,
           phone: data.phone || ""
         });
         setAvatar(data.avatar);
@@ -62,34 +64,54 @@ export default function ProfilePage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!formData.username || formData.username.length < 4) {
+      setErrors({ username: "Username phải từ 4–20 ký tự" });
+      return;
+    }
+
+    if (formData.phone && !/^[0-9]{9,11}$/.test(formData.phone)) {
+      setErrors({ phone: "Số điện thoại không hợp lệ" });
+      return;
+    }
+    
+
+    setErrors({});
+
+    const token = localStorage.getItem("token");
+
     try {
       const res = await fetch("http://localhost:8080/api/users/me", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData)
-      });
-      const updatedUser = await res.json();
-
-      // Cập nhật lại localStorage
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-
-      // Set lại formData để không bị mất khi username đổi
-      setFormData({
-        username: updatedUser.username,
-        email: updatedUser.email,
-        phone: updatedUser.phone || ""
+        body: JSON.stringify(formData),
       });
 
-      setModalMessage("Cập nhật hồ sơ thành công!");
+      if (!res.ok) {
+        if (res.status === 400) {
+          const data = await res.json();
+          setErrors(data);        // lỗi validate
+          return;                //  KHÔNG update
+        }
+        throw new Error("Update thất bại");
+      }
+
+      const data = await res.json();
+
+      // cập nhật localStorage
+      localStorage.setItem("user", JSON.stringify(data));
+
+      setModalMessage("Cập nhật thông tin thành công!");
       setShowModal(true);
 
     } catch (err) {
-      console.error("Update error:", err);
+      setModalMessage("Có lỗi xảy ra khi cập nhật!");
+      setShowModal(true);
     }
   };
+
 
   const handleUpload = async (e) => {
     const file = e.target.files[0];
@@ -137,19 +159,27 @@ export default function ProfilePage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Username */}
               <div className="relative">
-                <label className="block mb-2 font-semibold">Tên đăng nhập</label>
+                <label className="font-semibold">Username</label>
                 <input
                   type="text"
                   name="username"
                   value={formData.username}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 pr-12 bg-gray-200 rounded-lg focus:outline-none"
+                  onChange={(e) => {
+                    setFormData({ ...formData, username: e.target.value });
+                    setErrors(prev => ({ ...prev, username: null }));
+                  }}
+                  className={`w-full px-4 py-2 rounded-lg bg-gray-200 focus:outline-none
+      ${errors.username ? "border border-red-500" : ""}`}
                 />
-                <FaUser className="absolute right-4 top-11 text-gray-500" />
+<FaUser className="absolute right-4 top-9 text-gray-500" />
+                {errors.username && (
+                  <p className="text-red-500 text-sm mt-1">{errors.username}</p>
+                )}
               </div>
 
+
               {/* Email */}
-              <div className="relative">
+              {/* <div className="relative">
                 <label className="block mb-2 font-semibold">Email</label>
                 <input
                   type="text"
@@ -159,21 +189,28 @@ export default function ProfilePage() {
                   className="w-full px-4 py-2 pr-12 bg-gray-200 rounded-lg focus:outline-none"
                 />
                 <FaEnvelope className="absolute right-4 top-11   text-gray-500" />
-              </div>
+              </div> */}
 
               {/* Phone */}
               <div className="relative">
-                <label className="block mb-2 font-semibold">Số điện thoại</label>
+                <label className="font-semibold">Số điện thoại</label>
                 <input
                   type="text"
                   name="phone"
                   value={formData.phone}
-                  placeholder="Thêm số điện thoại"
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 pr-12 bg-gray-200 rounded-lg focus:outline-none"
+                  onChange={(e) => {
+                    setFormData({ ...formData, phone: e.target.value });
+                    setErrors(prev => ({ ...prev, phone: null }));
+                  }}
+                  className={`w-full px-4 py-2 rounded-lg bg-gray-200 focus:outline-none
+      ${errors.phone ? "border border-red-500" : ""}`}
                 />
-                <FaPhone className="absolute right-4 top-11  text-gray-500" />
+                <FaPhone className="absolute right-4 top-9 text-gray-500" />
+                {errors.phone && (
+                  <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                )}
               </div>
+
 
               <button
                 type="submit"

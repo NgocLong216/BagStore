@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Sidebar from "../components/Sidebar";
-import { FaLock } from "react-icons/fa";
+import { FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 export default function PasswordPage() {
@@ -11,6 +11,13 @@ export default function PasswordPage() {
     newPassword: "",
     confirmPassword: "",
   });
+
+  const [showPassword, setShowPassword] = useState({
+    oldPassword: false,
+    newPassword: false,
+    confirmPassword: false,
+  });
+
 
   const [message, setMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
@@ -77,15 +84,29 @@ export default function PasswordPage() {
                 <label className="block mb-2 font-semibold">
                   {item.label}
                 </label>
+
                 <input
-                  type="password"
+                  type={showPassword[item.name] ? "text" : "password"}
                   name={item.name}
                   value={formData[item.name]}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 pr-12 bg-gray-200 rounded-lg focus:outline-none"
+                  className="w-full px-4 py-2 pr-20 bg-gray-200 rounded-lg focus:outline-none"
                   required
                 />
-                <FaLock className="absolute right-4 top-11 text-gray-500" />
+
+                {/* Icon con mắt */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPassword(prev => ({
+                      ...prev,
+                      [item.name]: !prev[item.name],
+                    }))
+                  }
+                  className="absolute right-4 top-11 text-gray-600 hover:text-black"
+                >
+                  {showPassword[item.name] ? <FaEyeSlash /> : <FaEye />}
+                </button>
               </div>
             ))}
 
@@ -105,6 +126,7 @@ export default function PasswordPage() {
               Lưu
             </button>
           </form>
+
         </main>
       </div>
     </div>

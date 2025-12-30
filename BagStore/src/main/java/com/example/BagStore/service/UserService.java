@@ -73,7 +73,7 @@ public class UserService {
 
         // Update field
         user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
+//        user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
 
         User updated = userRepository.save(user);

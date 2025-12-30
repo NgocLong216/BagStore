@@ -29,6 +29,21 @@ export default function AddressPage() {
   const [provinceCode, setProvinceCode] = useState("");
   const [districtCode, setDistrictCode] = useState("");
   const [wardCode, setWardCode] = useState("");
+  const [formErrors, setFormErrors] = useState({});
+
+  useEffect(() => {
+    if (showPopup || showModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [showPopup, showModal]);
+  
+
 
   useEffect(() => {
     fetch("https://provinces.open-api.vn/api/p/")
@@ -162,6 +177,42 @@ export default function AddressPage() {
   // Thêm / Cập nhật
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    const errors = {};
+
+    if (!formData.fullName.trim()) {
+      errors.fullName = "Vui lòng nhập họ tên";
+    }
+
+    if (!formData.phone.trim()) {
+      errors.phone = "Vui lòng nhập số điện thoại";
+    }
+
+    if (!formData.subAddress.trim()) {
+      errors.subAddress = "Vui lòng nhập địa chỉ cụ thể";
+    }
+
+    if (!provinceCode) {
+      errors.province = "Vui lòng chọn Tỉnh / Thành phố";
+    }
+
+    if (!districtCode) {
+      errors.district = "Vui lòng chọn Quận / Huyện";
+    }
+
+    if (!wardCode) {
+      errors.ward = "Vui lòng chọn Phường / Xã";
+    }
+
+    // Nếu có lỗi → dừng submit
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    // Clear lỗi khi hợp lệ
+    setFormErrors({});
+
     const token = localStorage.getItem("token");
 
     const provinceName = provinces.find(p => p.code == provinceCode)?.name || "";
@@ -391,13 +442,19 @@ export default function AddressPage() {
                   <input
                     type="text"
                     placeholder="Họ và Tên"
-                    className="w-full px-4 py-2 rounded-lg bg-gray-200 focus:outline-none"
+                    className={`w-full px-4 py-2 rounded-lg focus:outline-none
+    ${formErrors.fullName ? "border-2 border-red-500 bg-red-50" : "bg-gray-200"}
+  `}
                     value={formData.fullName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, fullName: e.target.value })
-                    }
-                    required
+                    onChange={(e) => {
+                      setFormData({ ...formData, fullName: e.target.value });
+                      setFormErrors(prev => ({ ...prev, fullName: "" }));
+                    }}
                   />
+                  {formErrors.fullName && (
+                    <p className="text-sm text-red-500 mt-1">{formErrors.fullName}</p>
+                  )}
+
                 </div>
                 <div>
                   <input
@@ -427,11 +484,18 @@ export default function AddressPage() {
                 <div className="relative">
                   <select
                     value={provinceCode}
-                    onChange={handleProvinceChange}
-                    className="w-full px-4 py-2 pr-10 rounded-lg bg-gray-200 
-                 focus:outline-none focus:ring-2 focus:ring-green-700 
-                 appearance-none"
+                    onChange={(e) => {
+                      handleProvinceChange(e);
+                      setFormErrors(prev => ({ ...prev, province: "" }));
+                    }}
+                    className={`w-full px-4 py-2 rounded-lg appearance-none focus:outline-none
+                    ${formErrors.province ? "border-2 border-red-500 bg-red-50" : "bg-gray-200"}
+                  `}
                   >
+                    {formErrors.province && (
+                      <p className="text-sm text-red-500 mt-1">{formErrors.province}</p>
+                    )}
+
                     <option value="">Chọn Tỉnh / Thành phố</option>
                     {provinces.map(p => (
                       <option key={p.code} value={p.code}>{p.name}</option>
@@ -444,12 +508,19 @@ export default function AddressPage() {
                 <div className="relative">
                   <select
                     value={districtCode}
-                    onChange={handleDistrictChange}
+                    onChange={(e) => {
+                      handleDistrictChange(e);
+                      setFormErrors(prev => ({ ...prev, district: "" }));
+                    }}
                     disabled={!provinceCode}
-                    className="w-full px-4 py-2 pr-10 rounded-lg bg-gray-200 
-                 focus:outline-none focus:ring-2 focus:ring-green-700 
-                 appearance-none disabled:opacity-50"
+                    className={`w-full px-4 py-2 rounded-lg appearance-none focus:outline-none
+                    ${formErrors.district ? "border-2 border-red-500 bg-red-50" : "bg-gray-200"}
+                  `}
                   >
+                    {formErrors.district && (
+                      <p className="text-sm text-red-500 mt-1">{formErrors.district}</p>
+                    )}
+
                     <option value="">Chọn Quận / Huyện</option>
                     {districts.map(d => (
                       <option key={d.code} value={d.code}>{d.name}</option>
@@ -462,12 +533,19 @@ export default function AddressPage() {
                 <div className="relative">
                   <select
                     value={wardCode}
-                    onChange={(e) => setWardCode(e.target.value)}
+                    onChange={(e) => {
+                      setWardCode(e.target.value);
+                      setFormErrors(prev => ({ ...prev, ward: "" }));
+                    }}
                     disabled={!districtCode}
-                    className="w-full px-4 py-2 pr-10 rounded-lg bg-gray-200 
-                 focus:outline-none focus:ring-2 focus:ring-green-700 
-                 appearance-none disabled:opacity-50"
+                    className={`w-full px-4 py-2 rounded-lg appearance-none focus:outline-none
+                  ${formErrors.ward ? "border-2 border-red-500 bg-red-50" : "bg-gray-200"}
+                `}
                   >
+                    {formErrors.ward && (
+                      <p className="text-sm text-red-500 mt-1">{formErrors.ward}</p>
+                    )}
+
                     <option value="">Chọn Phường / Xã</option>
                     {wards.map(w => (
                       <option key={w.code} value={w.code}>{w.name}</option>
@@ -499,10 +577,14 @@ export default function AddressPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 rounded-lg bg-green-800 text-white hover:bg-black hover:text-[#d4a373]"
+                    disabled={!provinceCode || !districtCode || !wardCode}
+                    className="px-6 py-2 rounded-lg bg-green-800 text-white
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  hover:bg-black hover:text-[#d4a373]"
                   >
                     Hoàn Thành
                   </button>
+
                 </div>
               </form>
             </div>

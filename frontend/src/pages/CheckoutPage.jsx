@@ -24,6 +24,8 @@ export default function CheckoutPage() {
     const [provinceCode, setProvinceCode] = useState("");
     const [districtCode, setDistrictCode] = useState("");
     const [wardCode, setWardCode] = useState("");
+    const [formError, setFormError] = useState("");
+
 
     useEffect(() => {
         fetch("https://provinces.open-api.vn/api/p/")
@@ -128,6 +130,7 @@ export default function CheckoutPage() {
     const handlePlaceOrder = async () => {
         setErrors({});
         setShake({});
+        setFormError("");
 
         const token = localStorage.getItem("token");
         if (!token) return;
@@ -138,9 +141,10 @@ export default function CheckoutPage() {
         const wardName = wards.find(w => w.code == wardCode)?.name || "";
 
         if (!provinceName || !districtName || !wardName) {
-            alert("Vui lòng chọn đầy đủ Tỉnh / Huyện / Xã");
+            setFormError("Vui lòng chọn đầy đủ Tỉnh / Huyện / Xã");
             return;
         }
+
 
         const address = `${wardName}, ${districtName}, ${provinceName}`;
 
@@ -215,8 +219,9 @@ export default function CheckoutPage() {
 
         } catch (err) {
             console.error(err);
-            alert("Đặt hàng thất bại: " + err.message);
-        } finally {
+            setFormError(err.message || "Đặt hàng thất bại");
+        }
+        finally {
             setLoading(false);
         }
     };
@@ -246,6 +251,12 @@ export default function CheckoutPage() {
                 {/* LEFT FORM */}
                 <div className="lg:col-span-2 bg-white shadow-md rounded-xl p-6">
                     <h2 className="text-xl font-semibold mb-6">Thông tin giao hàng</h2>
+                    {formError && (
+                        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-400 text-red-600 font-medium animate-shake">
+                            {formError}
+                        </div>
+                    )}
+
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
@@ -323,7 +334,9 @@ export default function CheckoutPage() {
                             <select
                                 value={provinceCode}
                                 onChange={handleProvinceChange}
-                                className="px-5 py-3 rounded-lg bg-gray-200 focus:outline-none"
+                                className={`px-5 py-3 rounded-lg focus:outline-none
+                                    ${!provinceCode && formError ? "border-2 border-red-500 bg-red-50" : "bg-gray-200"}
+                                `}
                             >
                                 <option value="">Chọn Tỉnh / Thành phố</option>
                                 {provinces.map(p => (
@@ -335,7 +348,9 @@ export default function CheckoutPage() {
                                 value={districtCode}
                                 onChange={handleDistrictChange}
                                 disabled={!provinceCode}
-                                className="px-5 py-3 rounded-lg bg-gray-200 focus:outline-none disabled:opacity-50"
+                                className={`px-5 py-3 rounded-lg focus:outline-none
+                                    ${!districtCode && formError ? "border-2 border-red-500 bg-red-50" : "bg-gray-200"}
+                                `}
                             >
                                 <option value="">Chọn Quận / Huyện</option>
                                 {districts.map(d => (
@@ -347,7 +362,9 @@ export default function CheckoutPage() {
                                 value={wardCode}
                                 onChange={e => setWardCode(e.target.value)}
                                 disabled={!districtCode}
-                                className="px-5 py-3 rounded-lg bg-gray-200 focus:outline-none disabled:opacity-50"
+                                className={`px-5 py-3 rounded-lg focus:outline-none
+                                ${!wardCode && formError ? "border-2 border-red-500 bg-red-50" : "bg-gray-200"}
+                            `}
                             >
                                 <option value="">Chọn Phường / Xã</option>
                                 {wards.map(w => (
