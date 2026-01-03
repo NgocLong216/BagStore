@@ -26,6 +26,37 @@ export default function CheckoutPage() {
     const [wardCode, setWardCode] = useState("");
     const [formError, setFormError] = useState("");
 
+    const validateForm = () => {
+        const newErrors = {};
+    
+        if (!fullName.trim()) {
+            newErrors.fullName = "Vui lòng nhập họ tên";
+        }
+    
+        if (!phone.trim()) {
+            newErrors.phone = "Vui lòng nhập số điện thoại";
+        } else if (!/^(0[3|5|7|8|9])[0-9]{8}$/.test(phone)) {
+            newErrors.phone = "Số điện thoại không hợp lệ";
+        }
+    
+        if (!subAddress.trim()) {
+            newErrors.subAddress = "Vui lòng nhập địa chỉ cụ thể";
+        }
+    
+        setErrors(newErrors);
+    
+        if (Object.keys(newErrors).length > 0) {
+            const shakeFields = {};
+            Object.keys(newErrors).forEach(f => shakeFields[f] = true);
+            setShake(shakeFields);
+            setTimeout(() => setShake({}), 400);
+            return false;
+        }
+    
+        return true;
+    };
+    
+
 
     useEffect(() => {
         fetch("https://provinces.open-api.vn/api/p/")
@@ -131,6 +162,8 @@ export default function CheckoutPage() {
         setErrors({});
         setShake({});
         setFormError("");
+
+        if (!validateForm()) return;
 
         const token = localStorage.getItem("token");
         if (!token) return;

@@ -272,31 +272,35 @@ public class OrderService {
 
         String currentStatus = order.getStatus();
 
-        // Không cho thay đổi nếu đã hoàn tất hoặc đã hủy
-        if ("COMPLETED".equals(currentStatus)) {
-            throw new RuntimeException("Đơn hàng đã hoàn thành, không thể thay đổi");
-        }
-
-        if ("CANCELLED".equals(currentStatus)) {
-            throw new RuntimeException("Đơn hàng đã bị hủy");
-        }
-
-        // Validate status
-        if (!List.of("PENDING", "COMPLETED", "CANCELLED").contains(newStatus)) {
+        // Validate status hợp lệ
+        if (!List.of("PENDING", "CONFIRMED", "COMPLETED", "CANCELLED").contains(newStatus)) {
             throw new RuntimeException("Trạng thái không hợp lệ");
+        }
+
+        // ===== RULE CHUYỂN TRẠNG THÁI =====
+        switch (currentStatus) {
+            case "PENDING" -> {
+                if (!List.of("CONFIRMED", "CANCELLED").contains(newStatus)) {
+                    throw new RuntimeException("Chỉ có thể xác nhận hoặc hủy đơn");
+                }
+            }
+            case "CONFIRMED" -> {
+                if (!"COMPLETED".equals(newStatus)) {
+                    throw new RuntimeException("Chỉ có thể hoàn thành đơn đã xác nhận");
+                }
+            }
+            case "COMPLETED" ->
+                    throw new RuntimeException("Đơn hàng đã hoàn thành, không thể thay đổi");
+
+            case "CANCELLED" ->
+                    throw new RuntimeException("Đơn hàng đã bị hủy");
         }
 
         // ===== ROLLBACK TỒN KHO KHI HỦY =====
         if ("PENDING".equals(currentStatus) && "CANCELLED".equals(newStatus)) {
-
             for (OrderItem item : order.getItems()) {
-
                 Product product = item.getProduct();
-
-                product.setStock(
-                        product.getStock() + item.getQuantity()
-                );
-
+                product.setStock(product.getStock() + item.getQuantity());
                 productRepository.save(product);
             }
         }
@@ -353,6 +357,10 @@ public class OrderService {
 
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        if (!"COMPLETED".equals(order.getStatus())) {
+            throw new RuntimeException("Chỉ được in hóa đơn khi đơn hàng đã hoàn thành");
+        }
 
         return invoicePdfService.generateInvoice(order);
     }

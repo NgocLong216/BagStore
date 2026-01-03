@@ -10,7 +10,7 @@ import {
     FaTruck,
     FaCheckCircle,
     FaTimesCircle,
-    FaPrint 
+    FaPrint
 } from "react-icons/fa";
 
 export default function AdminOrdersPage() {
@@ -24,20 +24,35 @@ export default function AdminOrdersPage() {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [nextStatus, setNextStatus] = useState("");
 
+    const getModalTitle = () => {
+        switch (nextStatus) {
+          case "CONFIRMED":
+            return "Xác nhận đơn hàng";
+          case "COMPLETED":
+            return "Xác nhận hoàn thành";
+          case "CANCELLED":
+            return "Xác nhận hủy đơn";
+          default:
+            return "Xác nhận";
+        }
+      };
+
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [orderDetail, setOrderDetail] = useState(null);
 
     const statusMap = {
-        PENDING: "Đang xử lý",
+        PENDING: "Chờ xử lý",
+        CONFIRMED: "Đã xác nhận",
         COMPLETED: "Hoàn thành",
         CANCELLED: "Đã hủy",
-      };
+    };
+
 
     const paymentMap = {
         COD: "Tiền mặt",
         BANK: "Chuyển khoản",
         MOMO: "Momo",
-      };
+    };
 
     const openOrderDetail = async orderId => {
         try {
@@ -71,33 +86,33 @@ export default function AdminOrdersPage() {
 
     const printInvoice = async () => {
         try {
-          const token = localStorage.getItem("token");
-      
-          const res = await fetch(
-            `http://localhost:8080/api/admin/orders/${orderDetail.orderId}/invoice`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`
-              }
-            }
-          );
-      
-          if (!res.ok) throw new Error("Không in được hóa đơn");
-      
-          const blob = await res.blob();
-          const url = window.URL.createObjectURL(blob);
-      
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `invoice_${orderDetail.paymentRef}.pdf`;
-          a.click();
-      
-          window.URL.revokeObjectURL(url);
+            const token = localStorage.getItem("token");
+
+            const res = await fetch(
+                `http://localhost:8080/api/admin/orders/${orderDetail.orderId}/invoice`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            if (!res.ok) throw new Error("Không in được hóa đơn");
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `invoice_${orderDetail.paymentRef}.pdf`;
+            a.click();
+
+            window.URL.revokeObjectURL(url);
         } catch (err) {
-          alert(err.message);
+            alert(err.message);
         }
-      };
-      
+    };
+
 
     const confirmUpdateStatus = async () => {
         if (!selectedOrder) return;
@@ -203,13 +218,13 @@ export default function AdminOrdersPage() {
 
         if (keyword) {
             const kw = keyword.toLowerCase();
-        
+
             data = data.filter(o =>
                 (o.user && o.user.toLowerCase().includes(kw)) ||
                 (o.paymentRef && o.paymentRef.toLowerCase().includes(kw))
             );
         }
-        
+
 
         if (statusFilter) {
             data = data.filter(o => o.status === statusFilter);
@@ -224,6 +239,12 @@ export default function AdminOrdersPage() {
                 return <span className="text-yellow-600 flex items-center gap-1">
                     <FaTruck /> Chờ xử lý
                 </span>;
+            case "CONFIRMED":
+                return (
+                    <span className="text-blue-600 flex items-center gap-1">
+                        <FaEye /> Đã xác nhận
+                    </span>
+                );
             case "COMPLETED":
                 return <span className="text-green-600 flex items-center gap-1">
                     <FaCheckCircle /> Hoàn thành
@@ -265,6 +286,7 @@ export default function AdminOrdersPage() {
                         >
                             <option value="">-- Tất cả trạng thái --</option>
                             <option value="PENDING">Chờ xử lý</option>
+                            <option value="CONFIRMED">Đã xác nhận</option>
                             <option value="COMPLETED">Hoàn thành</option>
                             <option value="CANCELLED">Đã hủy</option>
                         </select>
@@ -291,27 +313,37 @@ export default function AdminOrdersPage() {
                                         <td className="p-4 font-medium">#{o.paymentRef}</td>
                                         <td className="p-4">{o.user}</td>
                                         <td className="p-4 flex items-center gap-1">
-                                            
+
                                             {o.total.toLocaleString()} đ
                                         </td>
                                         <td className="p-4">{paymentMap[o.paymentMethod]}</td>
                                         <td className="p-4">
-                                            {o.status === "PENDING" ? (
-
+                                            {["PENDING", "CONFIRMED"].includes(o.status) ? (
                                                 <select
                                                     value={o.status}
                                                     disabled={updatingId === o.orderId}
                                                     onChange={e => openConfirmModal(o, e.target.value)}
                                                     className="px-3 py-2 rounded bg-white border border-gray-300"
                                                 >
+                                                    {o.status === "PENDING" && (
+                                                        <>
+                                                            <option value="PENDING">Chờ xử lý</option>
+                                                            <option value="CONFIRMED">Xác nhận</option>
+                                                            <option value="CANCELLED">Hủy</option>
+                                                        </>
+                                                    )}
 
-                                                    <option value="PENDING">Chờ xử lý</option>
-                                                    <option value="COMPLETED">Hoàn thành</option>
-                                                    <option value="CANCELLED"> Hủy</option>
+                                                    {o.status === "CONFIRMED" && (
+                                                        <>
+                                                            <option value="CONFIRMED">Đã xác nhận</option>
+                                                            <option value="COMPLETED">Hoàn thành</option>
+                                                        </>
+                                                    )}
                                                 </select>
                                             ) : (
                                                 renderStatus(o.status)
                                             )}
+
                                         </td>
 
                                         <td className="p-4">{o.createdAt}</td>
@@ -451,13 +483,13 @@ export default function AdminOrdersPage() {
                         {/* TỔNG TIỀN */}
                         <div className="flex justify-between items-center mt-5">
 
-                        {orderDetail.status === "COMPLETED" && (
-                            <button
-                                onClick={printInvoice}
-                                className="flex items-center gap-3 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-800"
-                            >
-                                <FaPrint/> In hóa đơn PDF
-                            </button>)}
+                            {orderDetail.status === "COMPLETED" && (
+                                <button
+                                    onClick={printInvoice}
+                                    className="flex items-center gap-3 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-800"
+                                >
+                                    <FaPrint /> In hóa đơn PDF
+                                </button>)}
 
                             <div className="text-lg font-semibold">
                                 Tổng tiền: {orderDetail.totalPrice.toLocaleString()} đ
